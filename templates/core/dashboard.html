@@ -1,0 +1,330 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3 animate-fade-up">
+  <div>
+    <div class="page-title"><span id="greeting-text"></span>, <span id="greeting-name"></span> 👋</div>
+    <div class="page-subtitle" id="order-subtitle"></div>
+  </div>
+  <div id="admin-btn" class="d-none">
+  </div>
+</div>
+
+<div id="locked-msg" class="d-none mb-4 animate-fade-up">
+  <div class="k-card p-4 text-center" style="border-left:4px solid var(--accent);">
+    <div style="font-size:3rem;">🔒</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-top:10px;color:var(--dark);">
+      Orders are closed for today
+    </div>
+    <div style="color:var(--text-muted);font-size:0.9rem;margin-top:6px;">
+      Come back tomorrow morning before 10:30 AM
+    </div>
+  </div>
+</div>
+
+<div id="success-msg" class="d-none mb-4 animate-fade-up">
+  <div class="k-card p-4 text-center" style="border-left:4px solid var(--success);">
+    <div style="font-size:3rem;">✅</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-top:10px;color:var(--dark);">
+      Order placed successfully!
+    </div>
+    <div style="color:var(--text-muted);font-size:0.9rem;margin-top:6px;">
+      Your snacks are on their way. Enjoy!
+    </div>
+  </div>
+</div>
+<div id="cancel-msg" class="d-none mb-4 animate-fade-up">
+  <div class="k-card p-4 text-center" style="border-left:4px solid var(--accent);">
+    <div style="font-size:3rem;">❌</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-top:10px;color:var(--dark);">
+      Order Cancelled!
+    </div>
+    <div style="color:var(--text-muted);font-size:0.9rem;margin-top:6px;">
+      Your order has been removed successfully.
+    </div>
+  </div>
+</div>
+
+<div id="order-form">
+  <div class="row g-3 mb-4" id="snack-grid"></div>
+
+ <div class="k-card p-4 animate-fade-up stagger-4">
+  <div class="d-flex justify-content-between align-items-center gap-3">
+    <div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);
+        text-transform:uppercase;letter-spacing:0.5px;">Your total</div>
+      <div style="font-size:1.5rem;font-weight:700;letter-spacing:-1px;
+        color:var(--primary);white-space:nowrap;" id="order-total">₹0.00</div>
+    </div>
+    <button id="order-btn" class="k-btn k-btn-primary"
+      style="padding:14px 36px;font-size:1rem;"
+      onclick="handleOrderBtn()">
+      <i class="bi bi-send-fill" id="order-btn-icon"></i>
+      <span id="order-btn-text">Place Order</span>
+    </button>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let snacks = [];
+  let quantities = {};
+  let existingOrder = null;
+
+  const hour = new Date().getHours();
+  let greeting = 'Good morning';
+  if (hour >= 12 && hour < 17) {
+    greeting = 'Good afternoon';
+  } else if (hour >= 17 && hour < 21) {
+    greeting = 'Good evening';
+  } else if (hour >= 21) {
+    greeting = 'Good night';
+  }
+
+  const userName = localStorage.getItem('user_name') || 'there';
+  document.getElementById('greeting-name').textContent = userName;
+  document.getElementById('greeting-text').textContent = greeting;
+
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(10, 30, 0, 0);
+
+  const minutesLeft = Math.round((cutoff - now) / 60000);
+  const subtitleEl = document.getElementById('order-subtitle');
+
+  if (now >= cutoff) {
+    subtitleEl.innerHTML = `<span style="color:var(--accent);">⛔ Orders are closed for today</span>`;
+  } else if (minutesLeft <= 15) {
+    subtitleEl.innerHTML = `<span style="color:var(--accent);">⚠️ Hurry! Only <strong>${minutesLeft} minutes</strong> left to order</span>`;
+  } else if (minutesLeft <= 30) {
+    subtitleEl.innerHTML = `<span style="color:var(--warning);">⏰ <strong>${minutesLeft} minutes</strong> left — order closes at 10:30 AM</span>`;
+  } else {
+    subtitleEl.innerHTML = `Order closes at <strong>10:30 AM</strong> — pick your snacks below`;
+  }
+
+  if (localStorage.getItem('user_role') === 'admin') {
+    document.getElementById('admin-btn').classList.remove('d-none');
+  }
+
+  async function loadSnacks() {
+    const res = await fetch(API + '/snacks/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    if (res.status === 401) { window.location.href = '/login/'; return; }
+    snacks = await res.json();
+    await checkExistingOrder();
+    renderSnacks();
+    checkCutoff();
+  }
+
+  async function checkExistingOrder() {
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(API + '/orders/?date=' + today, {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    if (res.ok) {
+      const orders = await res.json();
+      const todayOrder = orders.find(o => o.date === today);
+      if (todayOrder) {
+        existingOrder = todayOrder;
+        todayOrder.items.forEach(item => {
+          quantities[item.snack] = item.quantity;
+        });
+        setButtonToCancelMode();
+      } else {
+        setButtonToOrderMode();
+      }
+    }
+  }
+
+  function setButtonToCancelMode() {
+    const btn  = document.getElementById('order-btn');
+    const icon = document.getElementById('order-btn-icon');
+    const text = document.getElementById('order-btn-text');
+    btn.className  = 'k-btn k-btn-danger px-5 py-3';
+    icon.className = 'bi bi-x-circle-fill';
+    text.textContent = 'Cancel Order';
+  }
+
+  function setButtonToOrderMode() {
+    const btn  = document.getElementById('order-btn');
+    const icon = document.getElementById('order-btn-icon');
+    const text = document.getElementById('order-btn-text');
+    btn.className  = 'k-btn k-btn-primary px-5 py-3';
+    icon.className = 'bi bi-send-fill';
+    text.textContent = 'Place Order';
+  }
+
+  function handleOrderBtn() {
+    if (existingOrder) {
+      cancelOrder();
+    } else {
+      submitOrder();
+    }
+  }
+
+  function renderSnacks() {
+    const grid = document.getElementById('snack-grid');
+    grid.innerHTML = snacks.map((s, i) => `
+      <div class="col-6 col-md-4 col-lg-3 animate-fade-up"
+        style="animation-delay:${i * 0.05}s;opacity:0;">
+        <div class="k-card p-3 h-100" id="card-${s.id}"
+          style="cursor:default;">
+          <div style="width:70px;height:70px;border-radius:16px;overflow:hidden;
+            background:var(--primary-light);display:flex;align-items:center;
+            justify-content:center;margin:0 auto 12px;">
+            ${s.image_url
+              ? `<img src="${s.image_url}" alt="${s.name}"
+                  style="width:100%;height:100%;object-fit:cover;">`
+              : `<span style="font-size:2rem;">🍱</span>`
+            }
+          </div>
+          <div style="font-size:0.95rem;font-weight:600;text-align:center;
+            color:var(--dark);margin-bottom:2px;">${s.name}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);text-align:center;
+            margin-bottom:14px;">₹${s.price}</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;">
+            <button onclick="changeQty(${s.id}, -1)"
+              style="width:34px;height:34px;border-radius:50%;
+              border:1.5px solid #e0e0f0;background:white;
+              font-size:1.1rem;display:flex;align-items:center;
+              justify-content:center;cursor:pointer;color:var(--text);
+              transition:all 0.2s ease;">
+              −
+            </button>
+            <span id="qty-${s.id}"
+              style="font-size:1.1rem;font-weight:700;
+              min-width:24px;text-align:center;color:var(--dark);">
+              ${quantities[s.id] || 0}
+            </span>
+            <button onclick="changeQty(${s.id}, 1)"
+              style="width:34px;height:34px;border-radius:50%;
+              border:none;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+              color:white;font-size:1.1rem;display:flex;align-items:center;
+              justify-content:center;cursor:pointer;
+              box-shadow:0 4px 12px rgba(252,128,25,0.3);
+              transition:all 0.2s ease;">
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    snacks.forEach(s => {
+      if (quantities[s.id] > 0) {
+        const card = document.getElementById('card-' + s.id);
+        if (card) {
+          card.style.boxShadow = '0 0 0 2.5px var(--primary), 0 8px 24px rgba(252,128,25,0.15)';
+          card.style.background = '#fffbf7';
+        }
+      }
+    });
+
+    updateTotal();
+  }
+
+  function changeQty(id, delta) {
+    quantities[id] = Math.max(0, (quantities[id] || 0) + delta);
+    document.getElementById('qty-' + id).textContent = quantities[id];
+    const card = document.getElementById('card-' + id);
+    if (quantities[id] > 0) {
+      card.style.boxShadow = '0 0 0 2.5px var(--primary), 0 8px 24px rgba(252,128,25,0.15)';
+      card.style.background = '#fffbf7';
+    } else {
+      card.style.boxShadow = 'var(--card-shadow)';
+      card.style.background = 'white';
+    }
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let total = 0;
+    snacks.forEach(s => {
+      total += (quantities[s.id] || 0) * parseFloat(s.price);
+    });
+    document.getElementById('order-total').textContent = '₹' + total.toFixed(2);
+  }
+
+  function checkCutoff() {
+    const now    = new Date();
+    const cutoff = new Date();
+    cutoff.setHours(10, 30, 0, 0);
+    if (now >= cutoff) {
+      document.getElementById('order-form').classList.add('d-none');
+      document.getElementById('locked-msg').classList.remove('d-none');
+    }
+  }
+
+  async function submitOrder() {
+    const items = Object.entries(quantities)
+      .filter(([, qty]) => qty > 0)
+      .map(([snack, quantity]) => ({
+        snack: parseInt(snack), quantity
+      }));
+
+    if (items.length === 0) {
+      alert('Please select at least one snack!');
+      return;
+    }
+
+    if (existingOrder) {
+      await fetch(API + '/orders/cancel/', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+    }
+
+    const res = await fetch(API + '/orders/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getToken()
+      },
+      body: JSON.stringify({
+        items,
+        date: new Date().toISOString().split('T')[0]
+      })
+    });
+
+    if (res.ok) {
+      existingOrder = true;
+      setButtonToCancelMode();
+      document.getElementById('success-msg').classList.remove('d-none');
+      setTimeout(() => {
+        document.getElementById('success-msg').classList.add('d-none');
+      }, 3000);
+    } else {
+      const err = await res.json();
+      alert(JSON.stringify(err));
+    }
+  }
+
+  async function cancelOrder() {
+    if (!confirm('Are you sure you want to cancel your order?')) return;
+
+    const res = await fetch(API + '/orders/cancel/', {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+    if (res.ok) {
+      existingOrder = null;
+      quantities = {};
+      renderSnacks();
+      setButtonToOrderMode();
+      document.getElementById('cancel-msg').classList.remove('d-none');
+      setTimeout(() => {
+        document.getElementById('cancel-msg').classList.add('d-none');
+      }, 3000);
+    } else {
+      const err = await res.json();
+      alert(JSON.stringify(err));
+    }
+  }
+
+  loadSnacks();
+</script>
+{% endblock %}

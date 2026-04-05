@@ -1,0 +1,169 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3 animate-fade-up stagger-60">
+  <div class="col">
+    <h4 class="fw-bold mb-0" style="color:#1a1a2e">
+      <i class="bi bi-clipboard2-check-fill" style="color:#FF5200"></i> Today's Order
+    </h4>
+    <p class="text-muted mb-0 mt-1">Combined order list for Fidha Cafe</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="/reports/" class="k-btn k-btn-light" style="text-decoration: none;">
+      <i class="bi bi-bar-chart-fill"></i> Reports
+    </a>
+    <a href="/manage/users/" class="k-btn k-btn-light" style="text-decoration: none;">
+      <i class="bi bi-people-fill"></i> Users
+    </a>
+    <a href="/manage/snacks/" class="k-btn k-btn-light" style="text-decoration: none;">
+      <i class="bi bi-bag-fill"></i> Snacks
+    </a>
+    <a href="/reconciliation/" class="k-btn k-btn-light" style="text-decoration: none;">
+      <i class="bi bi-receipt"></i> Reconcile
+    </a>
+    <button class="k-btn k-btn-dark" onclick="markAsOrdered()">
+      <i class="bi bi-telephone-fill"></i> Mark as Ordered
+    </button>
+  </div>
+</div>
+
+<div class="row g-3 mb-4 animate-fade-up stagger-60">
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--primary);">
+      <div class="stat-value" style="color:var(--primary);" id="total-items">0</div>
+      <div class="stat-label">Total Items</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid #0ea5e9;">
+      <div class="stat-value" style="color:#0ea5e9;" id="total-people">0</div>
+      <div class="stat-label">People Ordered</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--success);">
+      <div class="stat-value" style="color:var(--success);" id="total-amount">₹0</div>
+      <div class="stat-label">Total Amount</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--warning);">
+      <div class="stat-value" style="color:var(--warning);font-size:1.2rem;" id="order-date">-</div>
+      <div class="stat-label">Date</div>
+    </div>
+  </div>
+</div>
+
+<div class="k-card animate-fade-up stagger-60">
+  <div class="k-card-header">
+    <i class="bi bi-list-ul"></i> Combined Order List
+  </div>
+  <div id="order-list"></div>
+</div>
+
+<div id="ordered-msg" class="d-none mt-4 animate-fade-up stagger-60">
+  <div class="k-card p-4 text-center" style="border-left:4px solid var(--success);">
+    <div style="font-size:3rem;">📞</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-top:10px;color:var(--dark);">
+      Order Placed with Cafe!
+    </div>
+    <div style="color:var(--text-muted);font-size:0.9rem;margin-top:6px;">
+      The combined order has been marked as ordered.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Check if user is admin
+  if (localStorage.getItem('user_role') !== 'admin') {
+    window.location.href = '/dashboard/';
+  }
+  async function loadAggregatedOrder() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('order-date').textContent = today;
+
+    const res = await fetch(API + '/admin/aggregated/?date=' + today, {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+    if (res.status === 401) { window.location.href = '/login/'; return; }
+    if (res.status === 403) { window.location.href = '/dashboard/'; return; }
+
+    const data = await res.json();
+    document.getElementById('total-people').textContent = data.people_count || 0;
+    renderOrderList(data.items);
+  }
+
+  function renderOrderList(items) {
+    const list = document.getElementById('order-list');
+
+    if (items.length === 0) {
+      list.innerHTML = `
+        <div class="text-center py-5" style="color:var(--text-muted);">
+          <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+          <p class="mt-3 mb-0">No orders yet for today</p>
+        </div>`;
+      return;
+    }
+
+    let totalAmt = 0;
+    let totalQty = 0;
+
+    list.innerHTML = items.map((item, i) => {
+      const subtotal = item.total_qty * parseFloat(item.snack__price);
+      totalAmt += subtotal;
+      totalQty += item.total_qty;
+      return `
+        <div class="k-list-item d-flex align-items-center justify-content-between
+          animate-fade-up stagger-60" style="animation-delay:${i * 0.05}s;opacity:0;">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:48px;height:48px;border-radius:14px;overflow:hidden;
+              background:var(--primary-light);display:flex;align-items:center;
+              justify-content:center;flex-shrink:0;">
+              ${item.snack__image_url
+                ? `<img src="${item.snack__image_url}" alt="${item.snack__name}"
+                    style="width:100%;height:100%;object-fit:cover;">`
+                : `<span style="font-size:1.4rem;">🍱</span>`
+              }
+            </div>
+            <div>
+              <div style="font-weight:600;color:var(--dark);">${item.snack__name}</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">
+                ₹${item.snack__price} each
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <div style="font-weight:700;font-size:1.1rem;color:var(--primary);">
+              × ${item.total_qty}
+            </div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">
+              ₹${subtotal.toFixed(2)}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    list.innerHTML += `
+      <div class="d-flex justify-content-between align-items-center px-4 py-3"
+        style="background:var(--gray);border-radius:0 0 20px 20px;">
+        <span style="font-weight:700;color:var(--dark);">Grand Total</span>
+        <span style="font-weight:700;font-size:1.2rem;color:var(--primary);">
+          ₹${totalAmt.toFixed(2)}
+        </span>
+      </div>`;
+
+    document.getElementById('total-items').textContent = totalQty;
+    document.getElementById('total-amount').textContent = '₹' + totalAmt.toFixed(2);
+  }
+
+  function markAsOrdered() {
+    document.getElementById('ordered-msg').classList.remove('d-none');
+    document.querySelector('button[onclick="markAsOrdered()"]').disabled = true;
+  }
+
+  loadAggregatedOrder();
+</script>
+{% endblock %}

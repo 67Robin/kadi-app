@@ -1,0 +1,258 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col">
+    <h4 class="fw-bold mb-0" style="color:#1a1a2e">
+      <i class="bi bi-receipt" style="color:#FF5200"></i> Bill Reconciliation
+    </h4>
+    <p class="text-muted mb-0 mt-1">Compare cafe bill with system total</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4 animate-fade-up stagger-2">
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid #0ea5e9;">
+      <div class="stat-value" style="color:#0ea5e9;" id="stat-system">₹0</div>
+      <div class="stat-label">System Total</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--warning);">
+      <div class="stat-value" style="color:var(--warning);" id="stat-cafe">₹0</div>
+      <div class="stat-label">Cafe Bill</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--success);">
+      <div class="stat-value" id="stat-diff">₹0</div>
+      <div class="stat-label">Difference</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-top:3px solid var(--primary);">
+      <div class="stat-value" style="color:var(--primary);" id="stat-people">0</div>
+      <div class="stat-label">People</div>
+    </div>
+  </div>
+</div>
+
+<div class="k-card mb-4 animate-fade-up stagger-2">
+  <div class="k-card-header">
+    <i class="bi bi-calendar3"></i> Select Month
+  </div>
+  <div class="p-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="k-label">Month</label>
+        <select id="month-select" class="k-select">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="k-label">Year</label>
+        <select id="year-select" class="k-select">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="k-btn k-btn-primary w-100" onclick="loadSystemTotal()">
+          <i class="bi bi-calculator"></i> Calculate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="k-card mb-4 animate-fade-up" id="cafe-bill-section" style="display:none;">
+  <div class="k-card-header">
+    <i class="bi bi-pencil-fill"></i> Enter Cafe Bill
+  </div>
+  <div class="p-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="k-label">Cafe Bill Amount (₹)</label>
+        <input type="number" id="cafe-amount" class="k-input"
+          placeholder="Enter amount from cafe">
+      </div>
+      <div class="col-md-6">
+        <button class="k-btn k-btn-dark w-100" onclick="reconcile()">
+          <i class="bi bi-arrow-left-right"></i> Compare
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="k-card mb-4 animate-fade-up" id="result-section" style="display:none;">
+  <div class="p-4 text-center" id="result-content"></div>
+</div>
+
+<div class="k-card animate-fade-up stagger-3">
+  <div class="k-card-header">
+    <i class="bi bi-people-fill"></i> Per Person Breakdown
+  </div>
+  <div id="breakdown-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Check if user is admin
+  if (localStorage.getItem('user_role') !== 'admin') {
+    window.location.href = '/dashboard/';
+  }
+  const now = new Date();
+  document.getElementById('month-select').value = now.getMonth() + 1;
+  document.getElementById('year-select').value  = now.getFullYear();
+
+  let systemTotal = 0;
+
+  async function loadSystemTotal() {
+    const month = document.getElementById('month-select').value;
+    const year  = document.getElementById('year-select').value;
+
+    document.getElementById('breakdown-list').innerHTML = `
+      <div class="text-center py-4">
+        <div class="k-spinner mx-auto"></div>
+      </div>`;
+
+    const usersRes = await fetch(API + '/users/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const users = await usersRes.json();
+
+    let total     = 0;
+    let breakdown = [];
+
+    for (const user of users) {
+      const res = await fetch(
+        API + `/reports/monthly/${year}/${month}/?user_id=${user.id}`,
+        { headers: { 'Authorization': 'Bearer ' + getToken() } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.total > 0) {
+          total += data.total;
+          breakdown.push(data);
+        }
+      }
+    }
+
+    systemTotal = total;
+    document.getElementById('stat-system').textContent  = '₹' + total.toFixed(2);
+    document.getElementById('stat-people').textContent  = breakdown.length;
+    document.getElementById('cafe-bill-section').style.display = 'block';
+    renderBreakdown(breakdown);
+  }
+
+  function reconcile() {
+    const cafeAmount = parseFloat(
+      document.getElementById('cafe-amount').value
+    );
+
+    if (!cafeAmount) {
+      alert('Please enter the cafe bill amount');
+      return;
+    }
+
+    const diff = cafeAmount - systemTotal;
+
+    document.getElementById('stat-cafe').textContent =
+      '₹' + cafeAmount.toFixed(2);
+    document.getElementById('stat-diff').textContent =
+      '₹' + Math.abs(diff).toFixed(2);
+    document.getElementById('stat-diff').style.color =
+      diff === 0 ? 'var(--success)' : 'var(--accent)';
+
+    const resultEl = document.getElementById('result-content');
+
+    if (diff === 0) {
+      resultEl.innerHTML = `
+        <div style="font-size:3rem;">✅</div>
+        <div style="font-size:1.2rem;font-weight:700;margin-top:10px;
+          color:var(--success);">Bills Match!</div>
+        <div style="color:var(--text-muted);margin-top:6px;font-size:0.9rem;">
+          System total and cafe bill are the same — ₹${systemTotal.toFixed(2)}
+        </div>`;
+    } else if (diff > 0) {
+      resultEl.innerHTML = `
+        <div style="font-size:3rem;">⚠️</div>
+        <div style="font-size:1.2rem;font-weight:700;margin-top:10px;
+          color:var(--warning);">Cafe charged ₹${diff.toFixed(2)} more</div>
+        <div style="color:var(--text-muted);margin-top:6px;font-size:0.9rem;">
+          System: ₹${systemTotal.toFixed(2)} — Cafe: ₹${cafeAmount.toFixed(2)}
+        </div>`;
+    } else {
+      resultEl.innerHTML = `
+        <div style="font-size:3rem;">⚠️</div>
+        <div style="font-size:1.2rem;font-weight:700;margin-top:10px;
+          color:var(--accent);">Cafe charged ₹${Math.abs(diff).toFixed(2)} less</div>
+        <div style="color:var(--text-muted);margin-top:6px;font-size:0.9rem;">
+          System: ₹${systemTotal.toFixed(2)} — Cafe: ₹${cafeAmount.toFixed(2)}
+        </div>`;
+    }
+
+    document.getElementById('result-section').style.display = 'block';
+    document.getElementById('result-section').scrollIntoView({
+      behavior: 'smooth'
+    });
+  }
+
+  function renderBreakdown(reports) {
+    const list = document.getElementById('breakdown-list');
+
+    if (reports.length === 0) {
+      list.innerHTML = `
+        <div class="text-center py-5" style="color:var(--text-muted);">
+          <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+          <p class="mt-3 mb-0">No orders found for this month</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = reports.map((r, i) => `
+      <div class="k-list-item animate-fade-up"
+        style="animation-delay:${i*0.05}s;opacity:0;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div class="k-avatar">
+              ${r.user.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style="font-weight:600;color:var(--dark);">${r.user}</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">
+                ${r.items.length} snack types
+              </div>
+            </div>
+          </div>
+          <div style="font-weight:700;font-size:1.1rem;color:var(--primary);">
+            ₹${r.total.toFixed(2)}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    list.innerHTML += `
+      <div class="d-flex justify-content-between align-items-center px-4 py-3"
+        style="background:var(--gray);border-radius:0 0 20px 20px;">
+        <span style="font-weight:700;color:var(--dark);">Grand Total</span>
+        <span style="font-weight:700;font-size:1.2rem;color:var(--primary);">
+          ₹${systemTotal.toFixed(2)}
+        </span>
+      </div>`;
+  }
+</script>
+{% endblock %}

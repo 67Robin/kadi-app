@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User, SnackItem, Order, OrderItem
+import cloudinary
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,17 +24,21 @@ class SnackItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_image_url(self, obj):
-        if obj.image:
-            url = obj.image.url
-            # Cloudinary URLs are already absolute, return directly
-            if url.startswith('http'):
-                return url
-            # Local fallback: build absolute URI
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(url)
+        if not obj.image:
+            return None
+        url = obj.image.url if hasattr(obj.image, 'url') else str(obj.image)
+        # Already a full URL
+        if url.startswith('http'):
             return url
-        return None
+        # Cloudinary public ID — build URL manually
+        cloud_name = cloudinary.config().cloud_name
+        if cloud_name:
+            return f"https://res.cloudinary.com/{cloud_name}/image/upload/{url}"
+        # Local fallback
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 class OrderItemSerializer(serializers.ModelSerializer):
     snack_name  = serializers.CharField(source='snack.name', read_only=True)

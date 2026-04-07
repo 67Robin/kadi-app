@@ -24,11 +24,17 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
+            url = obj.image.url
+            # Cloudinary URLs are already absolute, return directly
+            if url.startswith('http'):
+                return url
+            # Local fallback: build absolute URI
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+                return request.build_absolute_uri(url)
+            return url
         return None
+
 class OrderItemSerializer(serializers.ModelSerializer):
     snack_name  = serializers.CharField(source='snack.name', read_only=True)
     snack_price = serializers.DecimalField(source='snack.price', max_digits=8, decimal_places=2, read_only=True)

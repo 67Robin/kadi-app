@@ -156,7 +156,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://127.0.0.1:8000').split(',')
+CSRF_TRUSTED_ORIGINS = ["https://kadi.up.railway.app", "http://localhost:8000"]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

@@ -125,7 +125,7 @@
           <div class="d-flex flex-column gap-2" style="flex-shrink:0;">
             <button class="k-btn k-btn-light"
               style="padding:6px 14px;font-size:0.8rem;white-space:nowrap;"
-              onclick="editSnack(${s.id}, '${s.name}', ${s.price}, ${s.is_active})">
+              onclick="editSnack(${s.id}, '${s.name.replace(/'/g, "\\'")}', ${s.price}, ${s.is_active}, '${s.image_url || ''}')">
               <i class="bi bi-pencil-fill"></i> Edit
             </button>
             <button class="k-btn ${s.is_active ? 'k-btn-danger' : 'k-btn-light'}"
@@ -141,15 +141,22 @@
     `).join('');
   }
 
-  function editSnack(id, name, price, isActive) {
+  function editSnack(id, name, price, isActive, imageUrl) {
     document.getElementById('form-title').textContent = 'Edit Snack';
     document.getElementById('edit-id').value          = id;
     document.getElementById('snack-name').value       = name;
     document.getElementById('snack-price').value      = price;
     document.getElementById('snack-status').value     = isActive.toString();
+    // Show existing image preview
+    if (imageUrl) {
+        document.getElementById('preview-img').src = imageUrl;
+        document.getElementById('image-preview').classList.remove('d-none');
+    } else {
+        document.getElementById('image-preview').classList.add('d-none');
+    }
     document.getElementById('add-form').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+}
 
   async function saveSnack() {
     const id     = document.getElementById('edit-id').value;
@@ -213,9 +220,13 @@
     document.getElementById('edit-id').value          = '';
     document.getElementById('snack-name').value       = '';
     document.getElementById('snack-price').value      = '';
+    document.getElementById('snack-image').value      = '';
+    document.getElementById('image-preview').classList.add('d-none');
+    document.getElementById('form-error').classList.add('d-none');    // ← add
+    document.getElementById('form-success').classList.add('d-none');  // ← add
     document.getElementById('add-form').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+}
 
   function hideAddForm() {
     document.getElementById('add-form').classList.add('d-none');

@@ -164,21 +164,20 @@ REST_FRAMEWORK = {
     ),
 }
 
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary config
 import cloudinary
 
-_cloud_name = config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'")
-_api_key    = config('CLOUDINARY_API_KEY', default='').strip('"').strip("'")
-_api_secret = config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'")
+_cloud_name = config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'") or 'davi5rts9'
+_api_key    = config('CLOUDINARY_API_KEY', default='').strip('"').strip("'") or '369534319362591'
+_api_secret = config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'") or 'YQ2_l8x4yv93nDdZci19KBWJEmc'
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': _cloud_name,
     'API_KEY':    _api_key,
     'API_SECRET': _api_secret,
-    'SECURE': True,
 }
 
 cloudinary.config(
@@ -203,5 +202,3 @@ CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True

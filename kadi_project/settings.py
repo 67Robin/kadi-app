@@ -178,6 +178,7 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': _cloud_name,
     'API_KEY':    _api_key,
     'API_SECRET': _api_secret,
+    'SECURE': True,
 }
 
 cloudinary.config(
@@ -202,3 +203,5 @@ CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True

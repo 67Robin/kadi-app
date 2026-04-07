@@ -138,11 +138,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticCloudinaryStorage'
 STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
 
-# STATICFILES_STORAGE replaced by STORAGES dict below
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -187,15 +189,7 @@ cloudinary.config(
     secure=True,
 )
 
-# Django 4.2+ STORAGES config — replaces DEFAULT_FILE_STORAGE & STATICFILES_STORAGE
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "cloudinary_storage.storage.StaticCloudinaryStorage",
-    },
-}
+
 
 from datetime import timedelta
 

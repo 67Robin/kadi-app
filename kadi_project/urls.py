@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('manage-admin-kadi/', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('api/', include('core.urls')),
     path('', template_views.login_view),
     path('login/', template_views.login_view),

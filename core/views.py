@@ -23,10 +23,16 @@ class IsAdminRole(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.role == 'admin'
 
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
 class SnackItemViewSet(viewsets.ModelViewSet):
-    queryset = SnackItem.objects.filter(is_active=True)
     serializer_class = SnackItemSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_queryset(self):
+        if self.request.user.role == 'admin':
+            return SnackItem.objects.all()
+        return SnackItem.objects.filter(is_active=True)
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -81,7 +87,13 @@ def aggregated_order(request):
     for item in data:
         image_url = None
         if item['snack__image']:
-            image_url = item['snack__image']
+            raw = item['snack__image']
+            if raw.startswith('http'):
+                image_url = raw
+            else:
+                import cloudinary
+                cloud_name = cloudinary.config().cloud_name
+                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
         items.append({
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),
@@ -191,4 +203,4 @@ def cancel_order(request):
         order.delete()
         return Response({'message': 'Order cancelled successfully'})
     except Order.DoesNotExist:
-        return Response({'error': 'No order found for today'}, status=404)    
+        return Response({'error': 'No order found for today'}, status=404)

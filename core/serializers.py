@@ -21,7 +21,7 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SnackItem
-        fields = ['id', 'name', 'price', 'image', 'image_url']
+        fields = ['id', 'name', 'price', 'image', 'image_url' , 'is_active']
 
     def get_image_url(self, obj):
         return obj.image.url if obj.image else None
@@ -35,6 +35,8 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
         instance.name = validated_data.get('name', instance.name)
         instance.price = validated_data.get('price', instance.price)
+        instance.is_active = validated_data.get('is_active', instance.is_active)
+
 
         instance.save()
         return instance

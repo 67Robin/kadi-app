@@ -168,21 +168,25 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary config
+import cloudinary
+
+_cloud_name = config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'")
+_api_key    = config('CLOUDINARY_API_KEY', default='').strip('"').strip("'")
+_api_secret = config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'")
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'"),
-    'API_KEY': config('CLOUDINARY_API_KEY', default='').strip('"').strip("'"),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'"),
+    'CLOUD_NAME': _cloud_name,
+    'API_KEY':    _api_key,
+    'API_SECRET': _api_secret,
 }
 
-import cloudinary
-cloudinary.config(
-    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
-    api_key=CLOUDINARY_STORAGE['API_KEY'],
-    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
-    secure=True,
-)
-
-if CLOUDINARY_STORAGE['CLOUD_NAME']:
+if _cloud_name:
+    cloudinary.config(
+        cloud_name=_cloud_name,
+        api_key=_api_key,
+        api_secret=_api_secret,
+        secure=True,
+    )
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 from datetime import timedelta

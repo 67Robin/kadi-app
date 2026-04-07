@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,7 +44,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'cloudinary',
-    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -142,7 +142,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE replaced by STORAGES dict below
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -187,7 +187,15 @@ cloudinary.config(
     secure=True,
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Django 4.2+ STORAGES config — replaces DEFAULT_FILE_STORAGE & STATICFILES_STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 from datetime import timedelta
 

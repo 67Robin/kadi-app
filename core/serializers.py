@@ -20,25 +20,13 @@ class SnackItemSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
 
     class Meta:
-        model  = SnackItem
-        fields = '__all__'
+        model = SnackItem
+        fields = ['id', 'name', 'price', 'image_url']
 
     def get_image_url(self, obj):
-        if not obj.image:
-            return None
-        url = obj.image.url if hasattr(obj.image, 'url') else str(obj.image)
-        # Already a full URL
-        if url.startswith('http'):
-            return url
-        # Cloudinary public ID — build URL manually
-        cloud_name = cloudinary.config().cloud_name
-        if cloud_name:
-            return f"https://res.cloudinary.com/{cloud_name}/image/upload/{url}"
-        # Local fallback
-        request = self.context.get('request')
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        if obj.image:
+            return obj.image.url
+        return None
 
 class OrderItemSerializer(serializers.ModelSerializer):
     snack_name  = serializers.CharField(source='snack.name', read_only=True)

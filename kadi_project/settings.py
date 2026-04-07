@@ -169,11 +169,10 @@ REST_FRAMEWORK = {
 
 # Cloudinary config
 import cloudinary
-import os
 
-_cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
-_api_key    = os.getenv('CLOUDINARY_API_KEY')
-_api_secret = os.getenv('CLOUDINARY_API_SECRET')
+_cloud_name = config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'")
+_api_key    = config('CLOUDINARY_API_KEY', default='').strip('"').strip("'")
+_api_secret = config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'")
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': _cloud_name,

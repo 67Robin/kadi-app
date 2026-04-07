@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -25,6 +26,7 @@ class IsAdminRole(permissions.BasePermission):
 class SnackItemViewSet(viewsets.ModelViewSet):
     queryset = SnackItem.objects.filter(is_active=True)
     serializer_class = SnackItemSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -79,9 +81,7 @@ def aggregated_order(request):
     for item in data:
         image_url = None
         if item['snack__image']:
-            image_url = request.build_absolute_uri(
-                settings.MEDIA_URL + item['snack__image']
-            )
+            image_url = item['snack__image']
         items.append({
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),

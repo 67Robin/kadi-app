@@ -169,12 +169,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary config
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
-    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'"),
+    'API_KEY': config('CLOUDINARY_API_KEY', default='').strip('"').strip("'"),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default='').strip('"').strip("'"),
 }
 
-if config('CLOUDINARY_CLOUD_NAME', default=''):
+if config('CLOUDINARY_CLOUD_NAME', default='').strip('"').strip("'"):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 from datetime import timedelta

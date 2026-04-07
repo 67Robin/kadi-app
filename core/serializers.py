@@ -21,12 +21,23 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SnackItem
-        fields = ['id', 'name', 'price', 'image_url']
+        fields = ['id', 'name', 'price', 'image', 'image_url']
 
     def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
+        return obj.image.url if obj.image else None
+
+    def update(self, instance, validated_data):
+        image = validated_data.get('image', None)
+
+        # Only update image if a new one is provided
+        if image is not None:
+            instance.image = image
+
+        instance.name = validated_data.get('name', instance.name)
+        instance.price = validated_data.get('price', instance.price)
+
+        instance.save()
+        return instance
 
 class OrderItemSerializer(serializers.ModelSerializer):
     snack_name  = serializers.CharField(source='snack.name', read_only=True)

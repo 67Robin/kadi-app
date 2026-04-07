@@ -180,14 +180,14 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': _api_secret,
 }
 
-if _cloud_name:
-    cloudinary.config(
-        cloud_name=_cloud_name,
-        api_key=_api_key,
-        api_secret=_api_secret,
-        secure=True,
-    )
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+cloudinary.config(
+    cloud_name=_cloud_name,
+    api_key=_api_key,
+    api_secret=_api_secret,
+    secure=True,
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 from datetime import timedelta
 

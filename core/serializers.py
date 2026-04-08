@@ -17,6 +17,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 class SnackItemSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
     image_url = serializers.SerializerMethodField()
 
     class Meta:

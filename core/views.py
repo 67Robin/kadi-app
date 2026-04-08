@@ -37,10 +37,15 @@ class SnackItemViewSet(viewsets.ModelViewSet):
             return SnackItem.objects.all()
         return SnackItem.objects.filter(is_active=True)
 
+    def get_serializer_context(self):
+        return {'request': self.request}
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated(), IsAdminRole()]
         return [permissions.IsAuthenticated()]
+
+    
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer

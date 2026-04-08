@@ -8,6 +8,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings as django_settings
+from rest_framework.response import Response
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -31,9 +32,6 @@ class SnackItemViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:  # admin
-            return SnackItem.objects.all()
         return SnackItem.objects.filter(is_active=True)
 
     def get_permissions(self):
@@ -53,6 +51,15 @@ class OrderViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(date=date)
             return qs
         return Order.objects.filter(user=user).prefetch_related('items__snack')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(
+            queryset,
+            many=True,
+            context={'request': request}  # 🔥 THIS IS THE FIX
+        )
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         if not is_before_cutoff():

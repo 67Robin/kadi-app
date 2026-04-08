@@ -44,10 +44,17 @@ class SnackItemSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     snack_name  = serializers.CharField(source='snack.name', read_only=True)
     snack_price = serializers.DecimalField(source='snack.price', max_digits=8, decimal_places=2, read_only=True)
+    snack_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model  = OrderItem
-        fields = ['id', 'snack', 'snack_name', 'snack_price', 'quantity']
+        fields = ['id', 'snack', 'snack_name', 'snack_price', 'quantity', 'snack_image_url']
+
+    def get_snack_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.snack.image:
+            return request.build_absolute_uri(obj.snack.image.url)
+        return None
 
 class OrderSerializer(serializers.ModelSerializer):
     items     = OrderItemSerializer(many=True)

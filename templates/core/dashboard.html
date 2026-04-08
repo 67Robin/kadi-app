@@ -89,7 +89,7 @@
 
   const now = new Date();
   const cutoff = new Date();
-  cutoff.setHours(10, 30, 0, 0);
+  cutoff.setHours(23, 30, 0, 0);
 
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');

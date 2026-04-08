@@ -14,7 +14,7 @@ from .serializers import (
     SnackItemSerializer, OrderSerializer
 )
 
-CUTOFF_TIME = time(10, 30)
+CUTOFF_TIME = time(23, 30)
 
 def is_before_cutoff():
     return timezone.localtime().time() < CUTOFF_TIME

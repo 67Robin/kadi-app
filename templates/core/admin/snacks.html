@@ -172,8 +172,8 @@
 
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('price', parseFloat(price));
-    formData.append('is_active', status === 'true');
+    formData.append('price', price);       
+    formData.append('is_active', status);
     if (image) formData.append('image', image);
 
     const method = id ? 'PATCH' : 'POST';
@@ -198,8 +198,17 @@
       document.getElementById('form-title').textContent = 'Add New Snack';
       loadSnacks();
     } else {
-      const err = await res.json();
-      showFormError(JSON.stringify(err));
+      let errText;
+
+      try {
+        const err = await res.json();
+        errText = JSON.stringify(err);
+      } catch (e) {
+        errText = await res.text();
+      }
+
+  console.log(errText);
+  showFormError(errText);
     }
   }
 

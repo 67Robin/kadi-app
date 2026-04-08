@@ -5,3 +5,7 @@ admin.site.register(User)
 admin.site.register(SnackItem)
 admin.site.register(Order)
 admin.site.register(OrderItem)
+@admin.register(SnackItem)
+class SnackAdmin(admin.ModelAdmin):
+    list_display = ['name', 'price', 'is_active']
+    list_editable = ['is_active']

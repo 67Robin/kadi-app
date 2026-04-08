@@ -68,15 +68,30 @@ class OrderViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Past cutoff time.")
         serializer.save()
 
+from datetime import datetime
+from django.db.models import Sum
+from django.utils import timezone
+
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
 def aggregated_order(request):
-    date = request.query_params.get('date', str(timezone.localdate()))
-    
-    people_count = Order.objects.filter(date=date).count()
-    
+    date_str = request.query_params.get('date')
+
+    # ✅ SAFE DATE PARSING
+    try:
+        if date_str:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        else:
+            date = timezone.localdate()
+    except:
+        return Response({"error": "Invalid date format"}, status=400)
+
+    # ✅ FIX: use __date for safe filtering
+    people_count = Order.objects.filter(date__date=date).count()
+
     data = OrderItem.objects.filter(
-        order__date=date, quantity__gt=0
+        order__date__date=date,  # 🔥 FIX HERE
+        quantity__gt=0
     ).values(
         'snack__name', 'snack__price', 'snack__image'
     ).annotate(
@@ -86,23 +101,28 @@ def aggregated_order(request):
     items = []
     for item in data:
         image_url = None
-        if item['snack__image']:
-            raw = item['snack__image']
+
+        raw = item.get('snack__image')
+
+        if raw:
+            raw = str(raw)  # 🔥 FIX: prevent crash
+
             if raw.startswith('http'):
                 image_url = raw
             else:
                 import cloudinary
                 cloud_name = cloudinary.config().cloud_name
                 image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+
         items.append({
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),
             'snack__image_url': image_url,
-            'total_qty': item['total_qty'],
+            'total_qty': item['total_qty'] or 0,  # 🔥 FIX
         })
 
     return Response({
-        'date': date, 
+        'date': str(date),
         'items': items,
         'people_count': people_count
     })

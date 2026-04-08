@@ -76,12 +76,13 @@ def aggregated_order(request):
 
     # ✅ FIX 1: Proper date parsing
     try:
-        if date_str:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str and date_str != "undefined":
+            date = datetime.fromisoformat(date_str).date()
         else:
             date = timezone.localdate()
-    except:
-        return Response({"error": "Invalid date"}, status=400)
+    except Exception as e:
+        print("DATE ERROR:", date_str, e)
+        date = timezone.localdate() 
 
     # ✅ FIX 2: Correct filtering
     people_count = Order.objects.filter(date=date).count()

@@ -81,7 +81,7 @@
     window.location.href = '/dashboard/';
   }
   async function loadAggregatedOrder() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
     document.getElementById('order-date').textContent = today;
 
     const res = await fetch(API + '/admin/aggregated/?date=' + today, {

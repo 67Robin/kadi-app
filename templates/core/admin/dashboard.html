@@ -92,6 +92,7 @@
       console.error("API ERROR:", errorText);
       return;
     }
+    const data = await res.json();
     if (!data || !data.items) {
       console.warn("Invalid API response:", data);
       return;
@@ -100,7 +101,7 @@
     if (res.status === 401) { window.location.href = '/login/'; return; }
     if (res.status === 403) { window.location.href = '/dashboard/'; return; }
 
-    const data = await res.json();
+  
     document.getElementById('total-people').textContent = data.people_count ?? 0;
     renderOrderList(data.items);
   }

@@ -195,19 +195,15 @@
       document.getElementById('form-title').textContent = 'Add New Snack';
       loadSnacks();
     } else {
-      const text = await res.text();
+  console.error(await res.text()); // keep for debugging
 
-      let errText;
+  const errorEl = document.getElementById('form-error');
+  errorEl.textContent = id 
+    ? 'Failed to update snack ❌' 
+    : 'Failed to add snack ❌';
 
-      try {
-        errText = JSON.stringify(JSON.parse(text));
-      } catch (e) {
-        errText = text;
-      }
-
-      console.log(errText);
-      showFormError(errText);
-    }
+  errorEl.classList.remove('d-none');
+}
   }
 
   async function toggleSnack(id, isActive) {

@@ -26,23 +26,31 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         try:
-          request = self.context.get('request')
-          if obj.image:
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url   
+            if obj.image:
+                return obj.image.url
         except Exception:
             return None
 
+    def create(self, validated_data):
+        # 🔥 IMPORTANT FIX
+        image = validated_data.pop('image', None)
+
+        snack = SnackItem.objects.create(**validated_data)
+
+        if image:
+            snack.image = image  # Cloudinary handles upload here
+            snack.save()
+
+        return snack
+
     def update(self, instance, validated_data):
-        image = validated_data.get('image', None)
+        image = validated_data.pop('image', None)
 
-        if image is not None:
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if image:
             instance.image = image
-
-        instance.name = validated_data.get('name', instance.name)
-        instance.price = validated_data.get('price', instance.price)
-        instance.is_active = validated_data.get('is_active', instance.is_active)
 
         instance.save()
         return instance

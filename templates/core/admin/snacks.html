@@ -15,8 +15,8 @@
 
 <div id="add-form" class="d-none mb-4 animate-fade-up">
   <div class="k-card p-4">
-    <div style="font-weight:700;font-size:1.1rem;color:var(--dark);margin-bottom:16px;"
-      id="form-title">Add New Snack</div>
+    <div style="font-weight:700;font-size:1.1rem;color:var(--dark);margin-bottom:16px;" id="form-title">Add New Snack
+    </div>
     <input type="hidden" id="edit-id">
     <div class="row g-3">
       <div class="col-md-6">
@@ -36,8 +36,7 @@
       </div>
       <div class="col-md-6">
         <label class="k-label">Snack Image</label>
-        <input type="file" id="snack-image" class="k-input"
-          accept="image/*">
+        <input type="file" id="snack-image" class="k-input" accept="image/*">
         <div id="image-preview" class="mt-2 d-none">
           <img id="preview-img" src="" alt="preview"
             style="width:70px;height:70px;object-fit:cover;border-radius:14px;">
@@ -52,11 +51,9 @@
         </button>
       </div>
     </div>
-    <div id="form-error" class="mt-3 d-none"
-      style="background:#fff0f3;color:var(--accent);border-radius:10px;
+    <div id="form-error" class="mt-3 d-none" style="background:#fff0f3;color:var(--accent);border-radius:10px;
       padding:10px 14px;font-size:0.875rem;"></div>
-    <div id="form-success" class="mt-3 d-none"
-      style="background:#e6faf3;color:#1a9e6e;border-radius:10px;
+    <div id="form-success" class="mt-3 d-none" style="background:#e6faf3;color:#1a9e6e;border-radius:10px;
       padding:10px 14px;font-size:0.875rem;"></div>
   </div>
 </div>
@@ -98,17 +95,17 @@
 
     list.innerHTML = snacks.map((s, i) => `
       <div class="k-list-item animate-fade-up"
-        style="animation-delay:${i*0.05}s;opacity:0;">
+        style="animation-delay:${i * 0.05}s;opacity:0;">
         <div class="d-flex align-items-center gap-3">
 
           <div style="width:52px;height:52px;border-radius:14px;overflow:hidden;
             background:var(--primary-light);display:flex;align-items:center;
             justify-content:center;flex-shrink:0;">
             ${s.image_url
-              ? `<img src="${s.image_url}" alt="${s.name}"
+        ? `<img src="${s.image_url}" alt="${s.name}"
                   style="width:100%;height:100%;object-fit:cover;">`
-              : `<span style="font-size:1.5rem;">🍱</span>`
-            }
+        : `<span style="font-size:1.5rem;">🍱</span>`
+      }
           </div>
 
           <div style="flex:1;min-width:0;">
@@ -143,27 +140,27 @@
 
   function editSnack(id, name, price, isActive, imageUrl) {
     document.getElementById('form-title').textContent = 'Edit Snack';
-    document.getElementById('edit-id').value          = id;
-    document.getElementById('snack-name').value       = name;
-    document.getElementById('snack-price').value      = price;
-    document.getElementById('snack-status').value     = isActive.toString();
+    document.getElementById('edit-id').value = id;
+    document.getElementById('snack-name').value = name;
+    document.getElementById('snack-price').value = price;
+    document.getElementById('snack-status').value = isActive.toString();
     // Show existing image preview
     if (imageUrl) {
-        document.getElementById('preview-img').src = imageUrl;
-        document.getElementById('image-preview').classList.remove('d-none');
+      document.getElementById('preview-img').src = imageUrl;
+      document.getElementById('image-preview').classList.remove('d-none');
     } else {
-        document.getElementById('image-preview').classList.add('d-none');
+      document.getElementById('image-preview').classList.add('d-none');
     }
     document.getElementById('add-form').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  }
 
   async function saveSnack() {
-    const id     = document.getElementById('edit-id').value;
-    const name   = document.getElementById('snack-name').value;
-    const price  = document.getElementById('snack-price').value;
+    const id = document.getElementById('edit-id').value;
+    const name = document.getElementById('snack-name').value;
+    const price = document.getElementById('snack-price').value;
     const status = document.getElementById('snack-status').value;
-    const image  = document.getElementById('snack-image').files[0];
+    const image = document.getElementById('snack-image').files[0];
 
     if (!name || !price) {
       showFormError('Please fill in all fields');
@@ -172,12 +169,12 @@
 
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('price', price);       
+    formData.append('price', price);
     formData.append('is_active', status);
     if (image) formData.append('image', image);
 
     const method = id ? 'PATCH' : 'POST';
-    const url    = id ? API + '/snacks/' + id + '/' : API + '/snacks/';
+    const url = id ? API + '/snacks/' + id + '/' : API + '/snacks/';
 
     const res = await fetch(url, {
       method: method,
@@ -190,7 +187,7 @@
       successEl.textContent = id ? 'Snack updated!' : 'Snack added!';
       successEl.classList.remove('d-none');
       document.getElementById('form-error').classList.add('d-none');
-      document.getElementById('edit-id').value    = '';
+      document.getElementById('edit-id').value = '';
       document.getElementById('snack-name').value = '';
       document.getElementById('snack-price').value = '';
       document.getElementById('snack-image').value = '';
@@ -198,17 +195,18 @@
       document.getElementById('form-title').textContent = 'Add New Snack';
       loadSnacks();
     } else {
+      const text = await res.text();
+
       let errText;
 
       try {
-        const err = await res.json();
-        errText = JSON.stringify(err);
+        errText = JSON.stringify(JSON.parse(text));
       } catch (e) {
-        errText = await res.text();
+        errText = text;
       }
 
-  console.log(errText);
-  showFormError(errText);
+      console.log(errText);
+      showFormError(errText);
     }
   }
 
@@ -226,16 +224,16 @@
 
   function showAddForm() {
     document.getElementById('form-title').textContent = 'Add New Snack';
-    document.getElementById('edit-id').value          = '';
-    document.getElementById('snack-name').value       = '';
-    document.getElementById('snack-price').value      = '';
-    document.getElementById('snack-image').value      = '';
+    document.getElementById('edit-id').value = '';
+    document.getElementById('snack-name').value = '';
+    document.getElementById('snack-price').value = '';
+    document.getElementById('snack-image').value = '';
     document.getElementById('image-preview').classList.add('d-none');
     document.getElementById('form-error').classList.add('d-none');    // ← add
     document.getElementById('form-success').classList.add('d-none');  // ← add
     document.getElementById('add-form').classList.remove('d-none');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  }
 
   function hideAddForm() {
     document.getElementById('add-form').classList.add('d-none');
@@ -249,11 +247,11 @@
     el.classList.remove('d-none');
   }
 
-  document.getElementById('snack-image').addEventListener('change', function() {
+  document.getElementById('snack-image').addEventListener('change', function () {
     const file = this.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         document.getElementById('preview-img').src = e.target.result;
         document.getElementById('image-preview').classList.remove('d-none');
       };

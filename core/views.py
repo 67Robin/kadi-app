@@ -68,29 +68,26 @@ class OrderViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Past cutoff time.")
         serializer.save()
 
-from datetime import datetime
-from django.db.models import Sum
-from django.utils import timezone
 
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
 def aggregated_order(request):
     date_str = request.query_params.get('date')
 
-    # ✅ SAFE DATE PARSING
+    # ✅ FIX 1: Proper date parsing
     try:
         if date_str:
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
         else:
             date = timezone.localdate()
     except:
-        return Response({"error": "Invalid date format"}, status=400)
+        return Response({"error": "Invalid date"}, status=400)
 
-    # ✅ FIX: use __date for safe filtering
-    people_count = Order.objects.filter(date__date=date).count()
+    # ✅ FIX 2: Correct filtering
+    people_count = Order.objects.filter(date=date).count()
 
     data = OrderItem.objects.filter(
-        order__date__date=date,  # 🔥 FIX HERE
+        order__date=date,
         quantity__gt=0
     ).values(
         'snack__name', 'snack__price', 'snack__image'
@@ -101,12 +98,11 @@ def aggregated_order(request):
     items = []
     for item in data:
         image_url = None
-
         raw = item.get('snack__image')
 
+        # ✅ FIX 3: Safe image handling
         if raw:
-            raw = str(raw)  # 🔥 FIX: prevent crash
-
+            raw = str(raw)
             if raw.startswith('http'):
                 image_url = raw
             else:
@@ -118,7 +114,7 @@ def aggregated_order(request):
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),
             'snack__image_url': image_url,
-            'total_qty': item['total_qty'] or 0,  # 🔥 FIX
+            'total_qty': item['total_qty'] or 0,  # ✅ FIX 4
         })
 
     return Response({

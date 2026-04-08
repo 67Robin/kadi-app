@@ -15,7 +15,7 @@ from .serializers import (
     SnackItemSerializer, OrderSerializer
 )
 
-CUTOFF_TIME = time(django_settings.CUTOFF_HOUR, django_settings.CUTOFF_MINUTE)
+CUTOFF_TIME = time(23, 30)
 
 def is_before_cutoff():
     return timezone.localtime().time() < CUTOFF_TIME

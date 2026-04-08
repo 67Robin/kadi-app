@@ -31,8 +31,7 @@
   </div>
   <div class="col-6 col-md-3">
     <div class="stat-card" style="border-top:3px solid var(--warning);">
-      <div class="stat-value" style="color:var(--warning);font-size:1.1rem;"
-        id="stat-fav">-</div>
+      <div class="stat-value" style="color:var(--warning);font-size:1.1rem;" id="stat-fav">-</div>
       <div class="stat-label">Favourite Snack</div>
     </div>
   </div>
@@ -59,14 +58,14 @@
   }
 
   function calcStats(orders) {
-    let totalSpent  = 0;
+    let totalSpent = 0;
     let totalSnacks = 0;
     const snackCount = {};
 
     orders.forEach(o => {
       o.items.forEach(i => {
         const sub = i.quantity * parseFloat(i.snack_price);
-        totalSpent  += sub;
+        totalSpent += sub;
         totalSnacks += i.quantity;
         snackCount[i.snack_name] =
           (snackCount[i.snack_name] || 0) + i.quantity;
@@ -76,10 +75,10 @@
     const fav = Object.entries(snackCount)
       .sort((a, b) => b[1] - a[1])[0];
 
-    document.getElementById('stat-total').textContent  = '₹' + totalSpent.toFixed(2);
+    document.getElementById('stat-total').textContent = '₹' + totalSpent.toFixed(2);
     document.getElementById('stat-orders').textContent = orders.length;
     document.getElementById('stat-snacks').textContent = totalSnacks;
-    document.getElementById('stat-fav').textContent    = fav ? fav[0].split(' ')[0] : '-';
+    document.getElementById('stat-fav').textContent = fav ? fav[0].split(' ')[0] : '-';
   }
 
   function renderHistory(orders) {
@@ -104,7 +103,7 @@
       });
 
       return `
-        <div class="animate-fade-up" style="animation-delay:${i*0.05}s;opacity:0;
+        <div class="animate-fade-up" style="animation-delay:${i * 0.05}s;opacity:0;
           border-bottom:1px solid rgba(0,0,0,0.05);">
           <div class="k-list-item d-flex align-items-center
             justify-content-between" style="cursor:pointer;"
@@ -135,11 +134,8 @@
               <div class="d-flex justify-content-between align-items-center py-2"
                 style="border-bottom:1px solid rgba(0,0,0,0.04);">
                 <div class="d-flex align-items-center gap-2">
-                  <div style="width:32px;height:32px;border-radius:10px;
-                    background:var(--primary-light);display:flex;
-                    align-items:center;justify-content:center;flex-shrink:0;">
-                    <span style="font-size:0.9rem;">🍱</span>
-                  </div>
+                 <img src="${i.snack_image_url || '/static/default.png'}"
+                 style="width:32px;height:32px;border-radius:10px;object-fit:cover;">
                   <span style="color:var(--text-muted);">${i.snack_name}</span>
                 </div>
                 <div>

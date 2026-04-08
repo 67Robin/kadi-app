@@ -206,7 +206,44 @@ def snacks_management_view(request):
     return render(request, 'core/admin/snacks.html')
 
 def history_view(request):
-    return render(request, 'core/history.html')
+    today = timezone.localdate()
+
+    data = OrderItem.objects.filter(
+        order__date=today,
+        quantity__gt=0
+    ).values(
+        'snack__name',
+        'snack__price',
+        'snack__image',   
+    ).annotate(
+        total_qty=Sum('quantity')
+    )
+
+    items = []
+
+    for item in data:
+        image_url = None
+        raw = item.get('snack__image')
+
+        if raw:
+            raw = str(raw)
+            if raw.startswith('http'):
+                image_url = raw
+            else:
+                import cloudinary
+                cloud_name = cloudinary.config().cloud_name
+                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+
+        items.append({
+            'name': item['snack__name'],
+            'price': item['snack__price'],
+            'image_url': image_url,   
+            'qty': item['total_qty'],
+        })
+
+    return render(request, 'core/history.html', {
+        'items': items
+    })
 def reconciliation_view(request):
     return render(request, 'core/admin/reconciliation.html')
 

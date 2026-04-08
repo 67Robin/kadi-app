@@ -32,6 +32,9 @@ class SnackItemViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:  # admin
+            return SnackItem.objects.all()
         return SnackItem.objects.filter(is_active=True)
 
     def get_permissions(self):

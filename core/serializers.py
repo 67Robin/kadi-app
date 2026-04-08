@@ -21,22 +21,27 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SnackItem
-        fields = ['id', 'name', 'price', 'image', 'image_url' , 'is_active']
+        fields = '__all__'
 
     def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
+        try:
+          request = self.context.get('request')
+          if obj.image:
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url   
+        except Exception:
+            return None
 
     def update(self, instance, validated_data):
         image = validated_data.get('image', None)
 
-        # Only update image if a new one is provided
         if image is not None:
             instance.image = image
 
         instance.name = validated_data.get('name', instance.name)
         instance.price = validated_data.get('price', instance.price)
         instance.is_active = validated_data.get('is_active', instance.is_active)
-
 
         instance.save()
         return instance
@@ -51,10 +56,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'snack', 'snack_name', 'snack_price', 'quantity', 'snack_image_url']
 
     def get_snack_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.snack.image:
-            return request.build_absolute_uri(obj.snack.image.url)
-        return None
+        try:
+            request = self.context.get('request')
+            if obj.snack.image:
+                if request:
+                    return request.build_absolute_uri(obj.snack.image.url)
+                return obj.snack.image.url
+        except Exception:
+            return None
 
 class OrderSerializer(serializers.ModelSerializer):
     items     = OrderItemSerializer(many=True)

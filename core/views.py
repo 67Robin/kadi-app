@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.conf import settings as django_settings
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -14,7 +15,7 @@ from .serializers import (
     SnackItemSerializer, OrderSerializer
 )
 
-CUTOFF_TIME = time(23, 30)
+CUTOFF_TIME = time(django_settings.CUTOFF_HOUR, django_settings.CUTOFF_MINUTE)
 
 def is_before_cutoff():
     return timezone.localtime().time() < CUTOFF_TIME

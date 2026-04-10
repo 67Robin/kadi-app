@@ -93,7 +93,7 @@
       return;
     }
 
-    const sorted = orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = orders.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
 
     list.innerHTML = sorted.map((o, i) => {
       const dateObj = new Date(o.date);
@@ -135,7 +135,7 @@
                 style="border-bottom:1px solid rgba(0,0,0,0.04);">
                 <div class="d-flex align-items-center gap-2">
                  <img src="${i.snack_image_url || '/static/default.png'}"
-                 style="width:32px;height:32px;border-radius:10px;object-fit:cover;">
+                 style="width:32px;height:32px;border-radius:10px;object-fit:cover;" loading="lazy">
                   <span style="color:var(--text-muted);">${i.snack_name}</span>
                 </div>
                 <div>

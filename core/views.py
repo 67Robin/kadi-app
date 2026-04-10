@@ -9,6 +9,7 @@ from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings as django_settings
 from rest_framework.response import Response
+from django.core.cache import cache
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -91,6 +92,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 def aggregated_order(request):
     date_str = request.query_params.get('date')
 
+    cache_key = f"agg_{date_str}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        return Response(cached_data)
+
     # ✅ FIX 1: Proper date parsing
     try:
         if date_str and date_str != "undefined":
@@ -124,11 +131,15 @@ def aggregated_order(request):
             'total_qty': item['total_qty'] or 0,  # ✅ FIX 4
         })
 
-    return Response({
-        'date': str(date),
-        'items': items,
-        'people_count': people_count
-    })
+    response_data = {
+    'date': str(date),
+    'items': items,
+    'people_count': people_count
+}
+
+    cache.set(cache_key, response_data, 60)   # 🔥 cache for 60 seconds
+
+    return Response(response_data)
 
 @api_view(['GET'])
 def monthly_summary(request, year, month):

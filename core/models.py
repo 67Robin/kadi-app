@@ -49,7 +49,7 @@ class SnackItem(models.Model):
 
 class Order(models.Model):
     user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    date       = models.DateField()
+    date = models.DateField(db_index=True)
     is_locked  = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -113,7 +113,8 @@
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     if (res.status === 401) { window.location.href = '/login/'; return; }
-  snacks = (await res.json()).filter(s => s.is_active);
+    const data = await res.json();
+    snacks = Array.isArray(data) ? data : [];
     await checkExistingOrder();
     renderSnacks();
     checkCutoff();

@@ -214,31 +214,18 @@ def snacks_management_view(request):
 def history_view(request):
     today = timezone.localdate()
 
-    data = OrderItem.objects.filter(
-        order__date=today,
-        quantity__gt=0
-    ).values(
-        'snack__name',
-        'snack__price',
-        'snack__image',   
-    ).annotate(
-        total_qty=Sum('quantity')
-    )
+    data = (
+    OrderItem.objects
+    .select_related('snack', 'order')   # 🔥 IMPORTANT
+    .filter(order__date=today, quantity__gt=0)
+    .values('snack__name', 'snack__price', 'snack__image')
+    .annotate(total_qty=Sum('quantity'))
+)
 
     items = []
 
     for item in data:
-        image_url = None
-        raw = item.get('snack__image')
-
-        if raw:
-            raw = str(raw)
-            if raw.startswith('http'):
-                image_url = raw
-            else:
-                import cloudinary
-                cloud_name = cloudinary.config().cloud_name
-                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+        image_url = item['snack__image']
 
         items.append({
             'name': item['snack__name'],

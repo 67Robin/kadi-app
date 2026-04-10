@@ -104,30 +104,19 @@ def aggregated_order(request):
     # ✅ FIX 2: Correct filtering
     people_count = Order.objects.filter(date=date).count()
 
-    data = OrderItem.objects.filter(
-        order__date=date,
-        quantity__gt=0
-    ).values(
-        'snack__name', 'snack__price', 'snack__image'
-    ).annotate(
-        total_qty=Sum('quantity')
-    ).order_by('-total_qty')
+    data = (
+    OrderItem.objects
+    .select_related('snack', 'order')   # 🔥 IMPORTANT
+    .filter(order__date=date, quantity__gt=0)
+    .values('snack__name', 'snack__price', 'snack__image')
+    .annotate(total_qty=Sum('quantity'))
+    .order_by('-total_qty')
+)
 
     items = []
     for item in data:
-        image_url = None
-        raw = item.get('snack__image')
-
-        # ✅ FIX 3: Safe image handling
-        if raw:
-            raw = str(raw)
-            if raw.startswith('http'):
-                image_url = raw
-            else:
-                import cloudinary
-                cloud_name = cloudinary.config().cloud_name
-                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
-
+        image_url = item['snack__image']
+        
         items.append({
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),

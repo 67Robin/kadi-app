@@ -31,16 +31,11 @@ class SnackItemViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        show_all = self.request.query_params.get('all') == 'true'
+        user = self.request.user
+        if user.is_staff:
+            return SnackItem.objects.all()
+        return SnackItem.objects.filter(is_active=True)
 
-        if self.request.user.is_staff and show_all:
-            return SnackItem.objects.all().only(
-                'id', 'name', 'price', 'image', 'is_active'
-            )
-
-        return SnackItem.objects.filter(is_active=True).only(
-            'id', 'name', 'price', 'image'
-        )
 
     def get_serializer_context(self):
         return {'request': self.request}
@@ -96,13 +91,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 def aggregated_order(request):
     date_str = request.query_params.get('date')
 
-    cache_key = f"agg_{date_str or 'today'}"
-    cached_data = cache.get(cache_key)
-
-    if cached_data:
-        return Response(cached_data)
-
-    # ✅ FIX 1: Proper date parsing
     try:
         if date_str and date_str != "undefined":
             date = datetime.fromisoformat(date_str).date()
@@ -135,16 +123,11 @@ def aggregated_order(request):
             'snack__image_url': image_url,
             'total_qty': item['total_qty'] or 0,  # ✅ FIX 4
         })
-
-    response_data = {
-    'date': str(date),
-    'items': items,
-    'people_count': people_count
-}
-
-    cache.set(cache_key, response_data, timeout=60)   # 🔥 cache for 60 seconds
-
-    return Response(response_data)
+    return Response({
+        'date': str(date),
+        'items': items,
+        'people_count': people_count
+    })
 
 @api_view(['GET'])
 def monthly_summary(request, year, month):

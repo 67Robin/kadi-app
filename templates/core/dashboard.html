@@ -108,7 +108,7 @@
     document.getElementById('admin-btn').classList.remove('d-none');
   }
 
-  async function loadSnacks() {
+ async function loadSnacks() {
   const res = await fetch(API + '/snacks/', {
     headers: { 'Authorization': 'Bearer ' + getToken() }
   });
@@ -118,16 +118,7 @@
     return;
   }
 
-  const data = await res.json();
-
-  // 🔥 support both formats (array OR paginated)
-  const list = Array.isArray(data) ? data : (data.results || []);
-
-  // ✅ backend already filters active → no need filter
-  snacks = list;
-
-  // ⚡ small performance boost (no UI lag)
-  snacks = snacks.slice(0, 20);
+  snacks = (await res.json()).filter(s => s.is_active);
 
   await checkExistingOrder();
   renderSnacks();

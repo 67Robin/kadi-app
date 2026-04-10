@@ -114,8 +114,18 @@ def aggregated_order(request):
 
     items = []
     for item in data:
+        image_url = None
         raw = item.get('snack__image')
-        image_url = str(raw) if raw else None
+
+        # ✅ FIX 3: Safe image handling
+        if raw:
+            raw = str(raw)
+            if raw.startswith('http'):
+                image_url = raw
+            else:
+                import cloudinary
+                cloud_name = cloudinary.config().cloud_name
+                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
         
         items.append({
             'snack__name': item['snack__name'],
@@ -224,8 +234,17 @@ def history_view(request):
     items = []
 
     for item in data:
+        image_url = None
         raw = item.get('snack__image')
-        image_url = str(raw) if raw else None
+
+        if raw:
+            raw = str(raw)
+            if raw.startswith('http'):
+                image_url = raw
+            else:
+                import cloudinary
+                cloud_name = cloudinary.config().cloud_name
+                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
 
         items.append({
             'name': item['snack__name'],

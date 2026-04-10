@@ -1,4 +1,3 @@
-from datetime import time
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import viewsets, permissions
@@ -6,9 +5,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.conf import settings
+from datetime import datetime, time
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.conf import settings as django_settings
-from rest_framework.response import Response
 from django.core.cache import cache
 
 from .models import User, SnackItem, Order, OrderItem
@@ -33,10 +31,16 @@ class SnackItemViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:  # admin
-            return SnackItem.objects.all()
-        return SnackItem.objects.filter(is_active=True)
+        show_all = self.request.query_params.get('all') == 'true'
+
+        if self.request.user.is_staff and show_all:
+            return SnackItem.objects.all().only(
+                'id', 'name', 'price', 'image', 'is_active'
+            )
+
+        return SnackItem.objects.filter(is_active=True).only(
+            'id', 'name', 'price', 'image'
+        )
 
     def get_serializer_context(self):
         return {'request': self.request}
@@ -92,7 +96,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 def aggregated_order(request):
     date_str = request.query_params.get('date')
 
-    cache_key = f"agg_{date_str}"
+    cache_key = f"agg_{date_str or 'today'}"
     cached_data = cache.get(cache_key)
 
     if cached_data:
@@ -122,7 +126,8 @@ def aggregated_order(request):
 
     items = []
     for item in data:
-        image_url = item['snack__image']
+        raw = item.get('snack__image')
+        image_url = str(raw) if raw else None
         
         items.append({
             'snack__name': item['snack__name'],
@@ -137,7 +142,7 @@ def aggregated_order(request):
     'people_count': people_count
 }
 
-    cache.set(cache_key, response_data, 60)   # 🔥 cache for 60 seconds
+    cache.set(cache_key, response_data, timeout=60)   # 🔥 cache for 60 seconds
 
     return Response(response_data)
 
@@ -230,13 +235,14 @@ def history_view(request):
     .select_related('snack', 'order')   # 🔥 IMPORTANT
     .filter(order__date=today, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
-    .annotate(total_qty=Sum('quantity'))
+    .annotate(total_qty=Sum('quantity')).order_by('-total_qty')
 )
 
     items = []
 
     for item in data:
-        image_url = item['snack__image']
+        raw = item.get('snack__image')
+        image_url = str(raw) if raw else None
 
         items.append({
             'name': item['snack__name'],

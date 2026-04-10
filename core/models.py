@@ -39,7 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 class SnackItem(models.Model):
     name       = models.CharField(max_length=100)
     price      = models.DecimalField(max_digits=8, decimal_places=2)
-    is_active  = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     image      = CloudinaryField('image', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

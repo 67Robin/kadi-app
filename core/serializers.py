@@ -22,7 +22,7 @@ class SnackItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SnackItem
-        fields = '__all__'
+        fields = ['id', 'name', 'price', 'image']
 
     def get_image_url(self, obj):
         try:

@@ -213,7 +213,6 @@
             position: relative;
         }
 
-        /* Input spacing */
         .password-input {
             padding-right: 50px;
         }
@@ -226,36 +225,33 @@
             transform: translateY(-50%);
             border: none;
             background: rgba(0, 0, 0, 0.04);
-            backdrop-filter: blur(6px);
             border-radius: 10px;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            overflow: hidden;
         }
 
-        /* Icon */
-        .toggle-btn i {
-            font-size: 1.1rem;
+        /* Icon animation */
+        #eyeIcon {
+            font-size: 1.2rem;
             color: #666;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
         }
 
-        /* Hover effect */
-        .toggle-btn:hover {
-            background: rgba(252, 128, 25, 0.12);
+        /* ✨ Closing animation */
+        .eye-close {
+            transform: scale(0.7) rotate(15deg);
+            opacity: 0;
         }
 
-        .toggle-btn:hover i {
-            color: #fc8019;
-        }
-
-        /* Click effect */
-        .toggle-btn:active {
-            transform: translateY(-50%) scale(0.9);
+        /* ✨ Opening animation */
+        .eye-open {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
         }
     </style>
 </head>
@@ -284,10 +280,10 @@
 
                 <div class="password-wrap">
                     <input type="password" id="password" class="field-input password-input"
-                        placeholder="Enter your password" autocomplete="current-password">
+                        placeholder="Enter your password">
 
-                    <button type="button" id="toggleIcon" class="toggle-btn">
-                        <i class="bi bi-eye"></i>
+                    <button type="button" id="toggleBtn" class="toggle-btn">
+                        <i id="eyeIcon" class="bi bi-eye"></i>
                     </button>
                 </div>
             </div>
@@ -374,17 +370,33 @@
             if (e.key === 'Enter') doLogin();
         });
 
-        const toggleBtn = document.getElementById('toggleIcon');
+        const toggleBtn = document.getElementById('toggleBtn');
         const passwordInput = document.getElementById('password');
-        const icon = toggleBtn.querySelector('i');
+        const eyeIcon = document.getElementById('eyeIcon');
 
         toggleBtn.addEventListener('click', () => {
             const isHidden = passwordInput.type === 'password';
 
-            passwordInput.type = isHidden ? 'text' : 'password';
+            // Step 1: animate out
+            eyeIcon.classList.add('eye-close');
 
-            icon.classList.toggle('bi-eye');
-            icon.classList.toggle('bi-eye-slash');
+            setTimeout(() => {
+                // Step 2: change type
+                passwordInput.type = isHidden ? 'text' : 'password';
+
+                // Step 3: switch icon
+                eyeIcon.classList.toggle('bi-eye');
+                eyeIcon.classList.toggle('bi-eye-slash');
+
+                // Step 4: animate in
+                eyeIcon.classList.remove('eye-close');
+                eyeIcon.classList.add('eye-open');
+
+                setTimeout(() => {
+                    eyeIcon.classList.remove('eye-open');
+                }, 200);
+
+            }, 120);
         });
     </script>
 </body>

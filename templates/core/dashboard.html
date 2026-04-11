@@ -47,11 +47,6 @@
 
 <div id="order-form">
   <div class="row g-3 mb-4" id="snack-grid"></div>
-  <div class="row g-3 mb-4" id="snack-grid">
-   <div class="text-center w-100 py-4" style="color:var(--text-muted);">
-    ⏳ Loading snacks...
-   </div>
-  </div>
  <div class="k-card p-4 animate-fade-up stagger-4">
   <div class="d-flex justify-content-between align-items-center gap-3">
     <div>
@@ -113,22 +108,6 @@
   }
 
  async function loadSnacks() {
-  const grid = document.getElementById('snack-grid');
-
-  // ✅ Show loading instantly
-  grid.innerHTML = `
-    <div class="text-center w-100 py-4" style="color:var(--text-muted);">
-      ⏳ Loading snacks...
-    </div>
-  `;
-
-  // ✅ Load cached snacks (instant UI)
-  const cached = localStorage.getItem('snacks_cache');
-  if (cached) {
-    snacks = JSON.parse(cached).filter(s => s.is_active);
-    renderSnacks();
-  }
-
   const res = await fetch(API + '/snacks/', {
     headers: { 'Authorization': 'Bearer ' + getToken() }
   });
@@ -139,9 +118,6 @@
   }
 
   snacks = (await res.json()).filter(s => s.is_active);
-
-  // ✅ Save cache
-  localStorage.setItem('snacks_cache', JSON.stringify(snacks));
 
   await checkExistingOrder();
   renderSnacks();
@@ -196,7 +172,6 @@
 
   function renderSnacks() {
     const grid = document.getElementById('snack-grid');
-    grid.style.opacity = 0;
     grid.innerHTML = snacks.map((s, i) => `
       <div class="col-6 col-md-4 col-lg-3 animate-fade-up"
         style="animation-delay:${i * 0.05}s;opacity:0;">
@@ -206,7 +181,7 @@
             background:var(--primary-light);display:flex;align-items:center;
             justify-content:center;margin:0 auto 12px;">
             ${s.image_url
-              ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy"
+              ? `<img src="${s.image_url}" alt="${s.name}"
                   style="width:100%;height:100%;object-fit:cover;">`
               : `<span style="font-size:2rem;">🍱</span>`
             }
@@ -268,9 +243,6 @@
       card.style.background = 'white';
     }
     updateTotal();
-    setTimeout(() => {
-      grid.style.opacity = 1;
-    }, 50);
   }
 
   function updateTotal() {

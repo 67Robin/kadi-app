@@ -128,6 +128,9 @@
 
   async function loadSnacks() {
 
+    const lockedMsg = document.getElementById('locked-msg');
+    const orderForm = document.getElementById('order-form');
+
     // ✅ OPEN STATE
     lockedMsg.classList.add('d-none');
     orderForm.classList.remove('d-none');

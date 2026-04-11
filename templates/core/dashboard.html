@@ -46,27 +46,47 @@
 </div>
 
 <div id="order-form" class="d-none">
- <div class="k-card p-4 animate-fade-up stagger-4">
-  <div class="d-flex justify-content-between align-items-center gap-3">
-    <div>
-      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);
+  <div class="k-card p-4 animate-fade-up stagger-4">
+    <div class="d-flex justify-content-between align-items-center gap-3">
+      <div>
+        <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);
         text-transform:uppercase;letter-spacing:0.5px;">Your total</div>
-      <div style="font-size:1.5rem;font-weight:700;letter-spacing:-1px;
+        <div style="font-size:1.5rem;font-weight:700;letter-spacing:-1px;
         color:var(--primary);white-space:nowrap;" id="order-total">₹0.00</div>
+      </div>
+      <button id="order-btn" class="k-btn k-btn-primary" style="padding:14px 36px;font-size:1rem;"
+        onclick="handleOrderBtn()">
+        <i class="bi bi-send-fill" id="order-btn-icon"></i>
+        <span id="order-btn-text">Place Order</span>
+      </button>
     </div>
-    <button id="order-btn" class="k-btn k-btn-primary"
-      style="padding:14px 36px;font-size:1rem;"
-      onclick="handleOrderBtn()">
-      <i class="bi bi-send-fill" id="order-btn-icon"></i>
-      <span id="order-btn-text">Place Order</span>
-    </button>
   </div>
-</div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+  function checkCutoffUI() {
+    const now = new Date();
+    const cutoff = new Date();
+    cutoff.setHours(10, 30, 0, 0);
+
+    const orderForm = document.getElementById('order-form');
+    const lockedMsg = document.getElementById('locked-msg');
+
+    if (now >= cutoff) {
+      console.log("LOCKED MODE"); // debug
+      lockedMsg.classList.remove('d-none');
+      orderForm.classList.add('d-none');
+      return true; // stop loading snacks
+    } else {
+      console.log("OPEN MODE"); // debug
+      lockedMsg.classList.add('d-none');
+      orderForm.classList.remove('d-none');
+      return false;
+    }
+  }
+
   let snacks = [];
   let quantities = {};
   let existingOrder = null;
@@ -85,6 +105,10 @@
   document.getElementById('greeting-name').textContent = userName;
   document.getElementById('greeting-text').textContent = greeting;
 
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(10, 30, 0, 0);
+
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');
 
@@ -102,63 +126,42 @@
     document.getElementById('admin-btn').classList.remove('d-none');
   }
 
- async function loadSnacks() {
+  async function loadSnacks() {
 
-  const now = new Date();
-  const cutoff = new Date();
-  cutoff.setHours(10, 30, 0, 0);
+    // ✅ OPEN STATE
+    lockedMsg.classList.add('d-none');
+    orderForm.classList.remove('d-none');
 
-  const orderForm = document.getElementById('order-form');
-  const lockedMsg = document.getElementById('locked-msg');
+    // ---------- NORMAL FLOW ----------
 
-  // ✅ SINGLE CONTROL POINT
-  const isClosed = now >= cutoff;
+    // CACHE FIRST
+    const cached = localStorage.getItem('snacks_cache');
+    if (cached) {
+      snacks = JSON.parse(cached).filter(s => s.is_active);
+      renderSnacks();
+    }
 
-  // 🔒 SHOW LOCK ONLY
-  if (isClosed) {
-    lockedMsg.classList.remove('d-none');
-    orderForm.classList.add('d-none');
+    // FETCH
+    const res = await fetch(API + '/snacks/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
 
-    // ❗ CLEAR ANY OLD CONTENT (VERY IMPORTANT)
-    document.getElementById('snack-grid').innerHTML = '';
+    if (res.status === 401) {
+      window.location.href = '/login/';
+      return;
+    }
 
-    return; // 🚫 STOP EVERYTHING
+    const fresh = (await res.json()).filter(s => s.is_active);
+
+    localStorage.setItem('snacks_cache', JSON.stringify(fresh));
+
+    if (JSON.stringify(snacks) !== JSON.stringify(fresh)) {
+      snacks = fresh;
+      renderSnacks();
+    }
+
+    await checkExistingOrder();
   }
-
-  // ✅ OPEN STATE
-  lockedMsg.classList.add('d-none');
-  orderForm.classList.remove('d-none');
-
-  // ---------- NORMAL FLOW ----------
-
-  // CACHE FIRST
-  const cached = localStorage.getItem('snacks_cache');
-  if (cached) {
-    snacks = JSON.parse(cached).filter(s => s.is_active);
-    renderSnacks();
-  }
-
-  // FETCH
-  const res = await fetch(API + '/snacks/', {
-    headers: { 'Authorization': 'Bearer ' + getToken() }
-  });
-
-  if (res.status === 401) {
-    window.location.href = '/login/';
-    return;
-  }
-
-  const fresh = (await res.json()).filter(s => s.is_active);
-
-  localStorage.setItem('snacks_cache', JSON.stringify(fresh));
-
-  if (JSON.stringify(snacks) !== JSON.stringify(fresh)) {
-    snacks = fresh;
-    renderSnacks();
-  }
-
-  await checkExistingOrder();
-}
 
   async function checkExistingOrder() {
     const today = new Date().toISOString().split('T')[0];
@@ -181,19 +184,19 @@
   }
 
   function setButtonToCancelMode() {
-    const btn  = document.getElementById('order-btn');
+    const btn = document.getElementById('order-btn');
     const icon = document.getElementById('order-btn-icon');
     const text = document.getElementById('order-btn-text');
-    btn.className  = 'k-btn k-btn-danger px-5 py-3';
+    btn.className = 'k-btn k-btn-danger px-5 py-3';
     icon.className = 'bi bi-x-circle-fill';
     text.textContent = 'Cancel Order';
   }
 
   function setButtonToOrderMode() {
-    const btn  = document.getElementById('order-btn');
+    const btn = document.getElementById('order-btn');
     const icon = document.getElementById('order-btn-icon');
     const text = document.getElementById('order-btn-text');
-    btn.className  = 'k-btn k-btn-primary px-5 py-3';
+    btn.className = 'k-btn k-btn-primary px-5 py-3';
     icon.className = 'bi bi-send-fill';
     text.textContent = 'Place Order';
   }
@@ -217,10 +220,10 @@
             background:var(--primary-light);display:flex;align-items:center;
             justify-content:center;margin:0 auto 12px;">
             ${s.image_url
-              ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy"
+        ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy"
                   style="width:100%;height:100%;object-fit:cover;">`
-              : `<span style="font-size:2rem;">🍱</span>`
-            }
+        : `<span style="font-size:2rem;">🍱</span>`
+      }
           </div>
           <div style="font-size:0.95rem;font-weight:600;text-align:center;
             color:var(--dark);margin-bottom:2px;">${s.name}</div>
@@ -355,6 +358,10 @@
       alert(JSON.stringify(err));
     }
   }
-  loadSnacks();
+  const isClosed = checkCutoffUI();
+
+  if (!isClosed) {
+    loadSnacks();
+  }
 </script>
 {% endblock %}

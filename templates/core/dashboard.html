@@ -120,14 +120,17 @@
 
  async function loadSnacks() {
 
-  // ✅ 1. SHOW CACHED DATA INSTANTLY
+  let cachedData = null;
+
+  // ✅ 1. LOAD CACHE
   const cached = localStorage.getItem('snacks_cache');
   if (cached) {
-    snacks = JSON.parse(cached).filter(s => s.is_active);
-    renderSnacks(); // ⚡ instant UI
+    cachedData = JSON.parse(cached).filter(s => s.is_active);
+    snacks = cachedData;
+    renderSnacks(); // ⚡ instant render
   }
 
-  // ✅ 2. FETCH IN BACKGROUND
+  // ✅ 2. FETCH NEW DATA
   const res = await fetch(API + '/snacks/', {
     headers: { 'Authorization': 'Bearer ' + getToken() }
   });
@@ -139,15 +142,18 @@
 
   const fresh = (await res.json()).filter(s => s.is_active);
 
-  // ✅ 3. UPDATE CACHE
+  // ✅ 3. SAVE CACHE
   localStorage.setItem('snacks_cache', JSON.stringify(fresh));
 
-  snacks = fresh;
+  // ✅ 4. ONLY RE-RENDER IF DATA CHANGED
+  if (JSON.stringify(cachedData) !== JSON.stringify(fresh)) {
+    snacks = fresh;
+    renderSnacks(); // 🔥 only if different
+  }
 
   await checkExistingOrder();
-  renderSnacks();
   checkCutoff();
-}
+ }
 
   async function checkExistingOrder() {
     const today = new Date().toISOString().split('T')[0];

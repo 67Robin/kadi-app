@@ -119,7 +119,15 @@
   }
 
  async function loadSnacks() {
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(10, 30, 0, 0);
 
+  if (now >= cutoff) {
+    document.getElementById('order-form').classList.add('d-none');
+    document.getElementById('locked-msg').classList.remove('d-none');
+    return;
+  }
   let cachedData = null;
 
   // ✅ 1. LOAD CACHE
@@ -360,7 +368,6 @@
       alert(JSON.stringify(err));
     }
   }
-  checkCutoff();
   loadSnacks();
 </script>
 {% endblock %}

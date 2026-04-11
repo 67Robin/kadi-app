@@ -198,6 +198,10 @@
 
   function setButtonToOrderMode() {
     const btn = document.getElementById('order-btn');
+    if (now >= cutoff) {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    }
     const icon = document.getElementById('order-btn-icon');
     const text = document.getElementById('order-btn-text');
     btn.className = 'k-btn k-btn-primary px-5 py-3';
@@ -206,6 +210,13 @@
   }
 
   function handleOrderBtn() {
+    const now = new Date();
+    const cutoff = new Date();
+    cutoff.setHours(10, 30, 0, 0);
+
+    if (now >= cutoff) {
+      return; // 🚫 DO NOTHING
+    }
     if (existingOrder) {
       cancelOrder();
     } else {
@@ -335,8 +346,7 @@
         document.getElementById('success-msg').classList.add('d-none');
       }, 3000);
     } else {
-      const err = await res.json();
-      alert(JSON.stringify(err));
+      console.log(err);
     }
   }
 

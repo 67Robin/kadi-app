@@ -275,6 +275,19 @@
                 btn.textContent = '✓ Success!';
                 btn.style.background = 'linear-gradient(135deg, #43d39e, #1a9e6e)';
 
+                try {
+                    const snackRes = await fetch(API + '/snacks/', {
+                        headers: { 'Authorization': 'Bearer ' + data.access }
+                    });
+
+                    if (snackRes.ok) {
+                        const snacksData = await snackRes.json();
+                        localStorage.setItem('snacks_cache', JSON.stringify(snacksData));
+                    }
+                } catch (e) {
+                    console.log('Prefetch failed');
+                }
+
                 setTimeout(() => {
                     window.location.href = '/dashboard/';
                 }, 500);

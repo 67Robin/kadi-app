@@ -45,19 +45,7 @@
   </div>
 </div>
 
-<div id="order-form">
-  <div class="row g-3 mb-4" id="snack-grid">
-  <!-- Skeleton loader -->
-  ${[...Array(8)].map(() => `
-    <div class="col-6 col-md-4 col-lg-3">
-      <div class="k-card p-3">
-        <div style="height:70px;background:#eee;border-radius:12px;margin-bottom:10px;"></div>
-        <div style="height:14px;background:#eee;border-radius:6px;margin-bottom:6px;"></div>
-        <div style="height:12px;background:#eee;border-radius:6px;width:60%;margin:auto;"></div>
-      </div>
-    </div>
-  `).join('')}
-</div>
+<div id="order-form" class="d-none">
  <div class="k-card p-4 animate-fade-up stagger-4">
   <div class="d-flex justify-content-between align-items-center gap-3">
     <div>
@@ -97,10 +85,6 @@
   document.getElementById('greeting-name').textContent = userName;
   document.getElementById('greeting-text').textContent = greeting;
 
-  const now = new Date();
-  const cutoff = new Date();
-  cutoff.setHours(10, 30, 0, 0);
-
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');
 
@@ -119,29 +103,42 @@
   }
 
  async function loadSnacks() {
+
   const now = new Date();
   const cutoff = new Date();
   cutoff.setHours(10, 30, 0, 0);
 
-   if (now >= cutoff) {
-    document.getElementById('locked-msg').classList.remove('d-none');
-    document.getElementById('order-form').style.display = 'none'; // 🔥 stronger than class
-    return; // ❗ stop everything
-  } else {
-    document.getElementById('locked-msg').classList.add('d-none');
-    document.getElementById('order-form').style.display = 'block';
-  }
-  let cachedData = null;
+  const orderForm = document.getElementById('order-form');
+  const lockedMsg = document.getElementById('locked-msg');
 
-  // ✅ 1. LOAD CACHE
+  // ✅ SINGLE CONTROL POINT
+  const isClosed = now >= cutoff;
+
+  // 🔒 SHOW LOCK ONLY
+  if (isClosed) {
+    lockedMsg.classList.remove('d-none');
+    orderForm.classList.add('d-none');
+
+    // ❗ CLEAR ANY OLD CONTENT (VERY IMPORTANT)
+    document.getElementById('snack-grid').innerHTML = '';
+
+    return; // 🚫 STOP EVERYTHING
+  }
+
+  // ✅ OPEN STATE
+  lockedMsg.classList.add('d-none');
+  orderForm.classList.remove('d-none');
+
+  // ---------- NORMAL FLOW ----------
+
+  // CACHE FIRST
   const cached = localStorage.getItem('snacks_cache');
   if (cached) {
-    cachedData = JSON.parse(cached).filter(s => s.is_active);
-    snacks = cachedData;
-    renderSnacks(); // ⚡ instant render
+    snacks = JSON.parse(cached).filter(s => s.is_active);
+    renderSnacks();
   }
 
-  // ✅ 2. FETCH NEW DATA
+  // FETCH
   const res = await fetch(API + '/snacks/', {
     headers: { 'Authorization': 'Bearer ' + getToken() }
   });
@@ -153,18 +150,15 @@
 
   const fresh = (await res.json()).filter(s => s.is_active);
 
-  // ✅ 3. SAVE CACHE
   localStorage.setItem('snacks_cache', JSON.stringify(fresh));
 
-  // ✅ 4. ONLY RE-RENDER IF DATA CHANGED
-  if (JSON.stringify(cachedData) !== JSON.stringify(fresh)) {
+  if (JSON.stringify(snacks) !== JSON.stringify(fresh)) {
     snacks = fresh;
-    renderSnacks(); // 🔥 only if different
+    renderSnacks();
   }
 
   await checkExistingOrder();
-  checkCutoff();
- }
+}
 
   async function checkExistingOrder() {
     const today = new Date().toISOString().split('T')[0];
@@ -293,16 +287,6 @@
       total += (quantities[s.id] || 0) * parseFloat(s.price);
     });
     document.getElementById('order-total').textContent = '₹' + total.toFixed(2);
-  }
-
-  function checkCutoff() {
-    const now    = new Date();
-    const cutoff = new Date();
-    cutoff.setHours(10, 30, 0, 0);
-    if (now >= cutoff) {
-      document.getElementById('order-form').classList.add('d-none');
-      document.getElementById('locked-msg').classList.remove('d-none');
-    }
   }
 
   async function submitOrder() {

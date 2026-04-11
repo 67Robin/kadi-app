@@ -73,7 +73,7 @@
     window.location.href = '/dashboard/';
   }
   async function loadSnacks() {
-    const res = await fetch(API + '/snacks/', {
+    const res = await fetch(API + '/snacks/?all=true', {
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     if (res.status === 401) { window.location.href = '/login/'; return; }

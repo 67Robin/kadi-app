@@ -32,7 +32,7 @@ class SnackItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff:
+        if user.role == 'admin':
             return SnackItem.objects.all()
         return SnackItem.objects.filter(is_active=True)
 

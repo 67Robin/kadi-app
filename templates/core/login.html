@@ -72,19 +72,27 @@
             margin-bottom: 32px;
         }
 
-    .app-icon {
-      width: 100px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 18px;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 12px 32px rgba(255, 255, 255, 0); }
-      50%       { box-shadow: 0 16px 40px rgba(255, 255, 255, 0); }
-    }
+        .app-icon {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 12px 32px rgba(255, 255, 255, 0);
+            }
+
+            50% {
+                box-shadow: 0 16px 40px rgba(255, 255, 255, 0);
+            }
+        }
 
         .app-name {
             font-size: 2rem;
@@ -198,6 +206,13 @@
             font-size: 0.8rem;
             margin: 20px 0 0;
         }
+        .bi {
+            transition: 0.2s;
+        }
+
+        .bi:hover {
+            color: #fc8019;
+        }
     </style>
 </head>
 
@@ -205,9 +220,9 @@
     <div class="login-wrap">
         <div class="login-header">
             <div class="app-icon">
-        <img src="/static/assets/Logooooooooo.png" alt="Kadi Logo"
-          style="width:250px;height:250px;object-fit:contain;">
-      </div>
+                <img src="/static/assets/Logooooooooo.png" alt="Kadi Logo"
+                    style="width:250px;height:250px;object-fit:contain;">
+            </div>
             <div class="app-name">Kadi</div>
             <div class="app-tagline">Fidha Cafe Snack Ledger</div>
         </div>
@@ -222,8 +237,16 @@
 
             <div class="field-wrap">
                 <label class="field-label">Password</label>
-                <input type="password" id="password" class="field-input" placeholder="Enter your password"
-                    autocomplete="current-password">
+
+                <div style="position:relative;">
+                    <input type="password" id="password" class="field-input" placeholder="Enter your password"
+                        autocomplete="current-password" style="padding-right:45px;">
+
+                    <i class="bi bi-eye" onclick="togglePassword('password', this)" style="position:absolute;right:14px;top:50%;
+                       transform:translateY(-50%);
+                        cursor:pointer;color:#8a8a9a;font-size:1.1rem;">
+                    </i>
+                </div>
             </div>
 
             <button class="login-btn" onclick="doLogin()" id="login-btn">
@@ -308,6 +331,20 @@
         document.addEventListener('keypress', e => {
             if (e.key === 'Enter') doLogin();
         });
+
+        function togglePassword(inputId, icon) {
+    const input = document.getElementById(inputId);
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
     </script>
 </body>
 

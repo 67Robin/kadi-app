@@ -47,8 +47,8 @@
 
 <div id="order-form">
   <div class="row g-3 mb-4" id="snack-grid">
-  <!-- Skeleton loader -->
-  ${[...Array(8)].map(() => `
+    <!-- Skeleton loader -->
+    ${[...Array(8)].map(() => `
     <div class="col-6 col-md-4 col-lg-3">
       <div class="k-card p-3">
         <div style="height:70px;background:#eee;border-radius:12px;margin-bottom:10px;"></div>
@@ -56,24 +56,23 @@
         <div style="height:12px;background:#eee;border-radius:6px;width:60%;margin:auto;"></div>
       </div>
     </div>
-  `).join('')}
-</div>
- <div class="k-card p-4 animate-fade-up stagger-4">
-  <div class="d-flex justify-content-between align-items-center gap-3">
-    <div>
-      <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);
-        text-transform:uppercase;letter-spacing:0.5px;">Your total</div>
-      <div style="font-size:1.5rem;font-weight:700;letter-spacing:-1px;
-        color:var(--primary);white-space:nowrap;" id="order-total">₹0.00</div>
-    </div>
-    <button id="order-btn" class="k-btn k-btn-primary"
-      style="padding:14px 36px;font-size:1rem;"
-      onclick="handleOrderBtn()">
-      <i class="bi bi-send-fill" id="order-btn-icon"></i>
-      <span id="order-btn-text">Place Order</span>
-    </button>
+    `).join('')}
   </div>
-</div>
+  <div class="k-card p-4 animate-fade-up stagger-4">
+    <div class="d-flex justify-content-between align-items-center gap-3">
+      <div>
+        <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);
+        text-transform:uppercase;letter-spacing:0.5px;">Your total</div>
+        <div style="font-size:1.5rem;font-weight:700;letter-spacing:-1px;
+        color:var(--primary);white-space:nowrap;" id="order-total">₹0.00</div>
+      </div>
+      <button id="order-btn" class="k-btn k-btn-primary" style="padding:14px 36px;font-size:1rem;"
+        onclick="handleOrderBtn()">
+        <i class="bi bi-send-fill" id="order-btn-icon"></i>
+        <span id="order-btn-text">Place Order</span>
+      </button>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -99,13 +98,15 @@
 
   const now = new Date();
   const cutoff = new Date();
-  cutoff.setHours(2, 30, 0, 0);
+  cutoff.setHours(2, 10, 0, 0);
 
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');
 
   if (now >= cutoff) {
     subtitleEl.innerHTML = `<span style="color:var(--accent);">⛔ Orders are closed for today</span>`;
+    document.getElementById('order-form').classList.add('d-none');
+    document.getElementById('locked-msg').classList.remove('d-none');
   } else if (minutesLeft <= 15) {
     subtitleEl.innerHTML = `<span style="color:var(--accent);">⚠️ Hurry! Only <strong>${minutesLeft} minutes</strong> left to order</span>`;
   } else if (minutesLeft <= 30) {
@@ -118,42 +119,42 @@
     document.getElementById('admin-btn').classList.remove('d-none');
   }
 
- async function loadSnacks() {
+  async function loadSnacks() {
 
-  let cachedData = null;
+    let cachedData = null;
 
-  // ✅ 1. LOAD CACHE
-  const cached = localStorage.getItem('snacks_cache');
-  if (cached) {
-    cachedData = JSON.parse(cached).filter(s => s.is_active);
-    snacks = cachedData;
-    renderSnacks(); // ⚡ instant render
+    // ✅ 1. LOAD CACHE
+    const cached = localStorage.getItem('snacks_cache');
+    if (cached) {
+      cachedData = JSON.parse(cached).filter(s => s.is_active);
+      snacks = cachedData;
+      renderSnacks(); // ⚡ instant render
+    }
+
+    // ✅ 2. FETCH NEW DATA
+    const res = await fetch(API + '/snacks/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+    if (res.status === 401) {
+      window.location.href = '/login/';
+      return;
+    }
+
+    const fresh = (await res.json()).filter(s => s.is_active);
+
+    // ✅ 3. SAVE CACHE
+    localStorage.setItem('snacks_cache', JSON.stringify(fresh));
+
+    // ✅ 4. ONLY RE-RENDER IF DATA CHANGED
+    if (JSON.stringify(cachedData) !== JSON.stringify(fresh)) {
+      snacks = fresh;
+      renderSnacks(); // 🔥 only if different
+    }
+    if (new Date() >= new Date(new Date().setHours(2,10,0,0))) return;
+    await checkExistingOrder();
+    checkCutoff();
   }
-
-  // ✅ 2. FETCH NEW DATA
-  const res = await fetch(API + '/snacks/', {
-    headers: { 'Authorization': 'Bearer ' + getToken() }
-  });
-
-  if (res.status === 401) {
-    window.location.href = '/login/';
-    return;
-  }
-
-  const fresh = (await res.json()).filter(s => s.is_active);
-
-  // ✅ 3. SAVE CACHE
-  localStorage.setItem('snacks_cache', JSON.stringify(fresh));
-
-  // ✅ 4. ONLY RE-RENDER IF DATA CHANGED
-  if (JSON.stringify(cachedData) !== JSON.stringify(fresh)) {
-    snacks = fresh;
-    renderSnacks(); // 🔥 only if different
-  }
-
-  await checkExistingOrder();
-  checkCutoff();
- }
 
   async function checkExistingOrder() {
     const today = new Date().toISOString().split('T')[0];
@@ -176,19 +177,19 @@
   }
 
   function setButtonToCancelMode() {
-    const btn  = document.getElementById('order-btn');
+    const btn = document.getElementById('order-btn');
     const icon = document.getElementById('order-btn-icon');
     const text = document.getElementById('order-btn-text');
-    btn.className  = 'k-btn k-btn-danger px-5 py-3';
+    btn.className = 'k-btn k-btn-danger px-5 py-3';
     icon.className = 'bi bi-x-circle-fill';
     text.textContent = 'Cancel Order';
   }
 
   function setButtonToOrderMode() {
-    const btn  = document.getElementById('order-btn');
+    const btn = document.getElementById('order-btn');
     const icon = document.getElementById('order-btn-icon');
     const text = document.getElementById('order-btn-text');
-    btn.className  = 'k-btn k-btn-primary px-5 py-3';
+    btn.className = 'k-btn k-btn-primary px-5 py-3';
     icon.className = 'bi bi-send-fill';
     text.textContent = 'Place Order';
   }
@@ -212,10 +213,10 @@
             background:var(--primary-light);display:flex;align-items:center;
             justify-content:center;margin:0 auto 12px;">
             ${s.image_url
-              ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy"
+        ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy"
                   style="width:100%;height:100%;object-fit:cover;">`
-              : `<span style="font-size:2rem;">🍱</span>`
-            }
+        : `<span style="font-size:2rem;">🍱</span>`
+      }
           </div>
           <div style="font-size:0.95rem;font-weight:600;text-align:center;
             color:var(--dark);margin-bottom:2px;">${s.name}</div>
@@ -284,15 +285,15 @@
     document.getElementById('order-total').textContent = '₹' + total.toFixed(2);
   }
 
-  function checkCutoff() {
-    const now    = new Date();
-    const cutoff = new Date();
-    cutoff.setHours(2, 30, 0, 0);
-    if (now >= cutoff) {
-      document.getElementById('order-form').classList.add('d-none');
-      document.getElementById('locked-msg').classList.remove('d-none');
-    }
-  }
+  // function checkCutoff() {
+  //   const now = new Date();
+  //   const cutoff = new Date();
+  //   cutoff.setHours(2, 30, 0, 0);
+  //   if (now >= cutoff) {
+  //     document.getElementById('order-form').classList.add('d-none');
+  //     document.getElementById('locked-msg').classList.remove('d-none');
+  //   }
+  // }
 
   async function submitOrder() {
     const items = Object.entries(quantities)
@@ -360,7 +361,13 @@
       alert(JSON.stringify(err));
     }
   }
-  checkCutoff();
-  loadSnacks();
+  if (new Date() >= new Date(new Date().setHours(10, 30, 0, 0))) {
+    // ⛔ CLOSED
+    document.getElementById('order-form').classList.add('d-none');
+    document.getElementById('locked-msg').classList.remove('d-none');
+  } else {
+    // ✅ OPEN
+    loadSnacks();
+  }
 </script>
 {% endblock %}

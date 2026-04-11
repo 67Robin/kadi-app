@@ -207,12 +207,55 @@
             font-size: 0.8rem;
             margin: 20px 0 0;
         }
-        .bi {
-            transition: 0.2s;
+
+        /* Wrapper */
+        .password-wrap {
+            position: relative;
         }
 
-        .bi:hover {
+        /* Input spacing */
+        .password-input {
+            padding-right: 50px;
+        }
+
+        /* Toggle button */
+        .toggle-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: rgba(0, 0, 0, 0.04);
+            backdrop-filter: blur(6px);
+            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* Icon */
+        .toggle-btn i {
+            font-size: 1.1rem;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        /* Hover effect */
+        .toggle-btn:hover {
+            background: rgba(252, 128, 25, 0.12);
+        }
+
+        .toggle-btn:hover i {
             color: #fc8019;
+        }
+
+        /* Click effect */
+        .toggle-btn:active {
+            transform: translateY(-50%) scale(0.9);
         }
     </style>
 </head>
@@ -239,17 +282,15 @@
             <div class="field-wrap">
                 <label class="field-label">Password</label>
 
-                <div style="position:relative;">
-                    <input type="password" id="password" class="field-input" placeholder="Enter your password"
-                        autocomplete="current-password" style="padding-right:45px;">
+                <div class="password-wrap">
+                    <input type="password" id="password" class="field-input password-input"
+                        placeholder="Enter your password" autocomplete="current-password">
 
-                    <i class="bi bi-eye" onclick="togglePassword('password', this)" style="position:absolute;right:14px;top:50%;
-                       transform:translateY(-50%);
-                        cursor:pointer;color:#8a8a9a;font-size:1.1rem;">
-                    </i>
+                    <button type="button" id="toggleIcon" class="toggle-btn">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
-
             <button class="login-btn" onclick="doLogin()" id="login-btn">
                 Sign In
             </button>
@@ -333,19 +374,18 @@
             if (e.key === 'Enter') doLogin();
         });
 
-        function togglePassword(inputId, icon) {
-    const input = document.getElementById(inputId);
+        const toggleBtn = document.getElementById('toggleIcon');
+        const passwordInput = document.getElementById('password');
+        const icon = toggleBtn.querySelector('i');
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('bi-eye');
-        icon.classList.add('bi-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('bi-eye-slash');
-        icon.classList.add('bi-eye');
-    }
-}
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+
+            passwordInput.type = isHidden ? 'text' : 'password';
+
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+        });
     </script>
 </body>
 

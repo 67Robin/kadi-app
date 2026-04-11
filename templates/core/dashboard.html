@@ -67,26 +67,6 @@
 
 {% block scripts %}
 <script>
-  function checkCutoffUI() {
-    const now = new Date();
-    const cutoff = new Date();
-    cutoff.setHours(10, 30, 0, 0);
-
-    const orderForm = document.getElementById('order-form');
-    const lockedMsg = document.getElementById('locked-msg');
-
-    if (now >= cutoff) {
-      console.log("LOCKED MODE"); // debug
-      lockedMsg.classList.remove('d-none');
-      orderForm.classList.add('d-none');
-      return true; // stop loading snacks
-    } else {
-      console.log("OPEN MODE"); // debug
-      lockedMsg.classList.add('d-none');
-      orderForm.classList.remove('d-none');
-      return false;
-    }
-  }
 
   let snacks = [];
   let quantities = {};
@@ -105,11 +85,6 @@
   const userName = localStorage.getItem('user_name') || 'there';
   document.getElementById('greeting-name').textContent = userName;
   document.getElementById('greeting-text').textContent = greeting;
-
-  const now = new Date();
-  const cutoff = new Date();
-  cutoff.setHours(10, 30, 0, 0);
-
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');
 
@@ -129,44 +104,20 @@
 
   async function loadSnacks() {
 
-    const lockedMsg = document.getElementById('locked-msg');
-    const orderForm = document.getElementById('order-form');
+  const res = await fetch(API + '/snacks/', {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  });
 
-    // ✅ OPEN STATE
-    lockedMsg.classList.add('d-none');
-    orderForm.classList.remove('d-none');
-
-    // ---------- NORMAL FLOW ----------
-
-    // CACHE FIRST
-    const cached = localStorage.getItem('snacks_cache');
-    if (cached) {
-      snacks = JSON.parse(cached).filter(s => s.is_active);
-      renderSnacks();
-    }
-
-    // FETCH
-    const res = await fetch(API + '/snacks/', {
-      headers: { 'Authorization': 'Bearer ' + getToken() }
-    });
-
-    if (res.status === 401) {
-      window.location.href = '/login/';
-      return;
-    }
-
-    const fresh = (await res.json()).filter(s => s.is_active);
-
-    localStorage.setItem('snacks_cache', JSON.stringify(fresh));
-
-    if (JSON.stringify(snacks) !== JSON.stringify(fresh)) {
-      snacks = fresh;
-      renderSnacks();
-    }
-
-    await checkExistingOrder();
+  if (res.status === 401) {
+    window.location.href = '/login/';
+    return;
   }
 
+  snacks = (await res.json()).filter(s => s.is_active);
+
+  await checkExistingOrder();
+  renderSnacks();
+}
   async function checkExistingOrder() {
     const today = new Date().toISOString().split('T')[0];
     const res = await fetch(API + '/orders/?date=' + today, {
@@ -210,13 +161,6 @@
   }
 
   function handleOrderBtn() {
-    const now = new Date();
-    const cutoff = new Date();
-    cutoff.setHours(10, 30, 0, 0);
-
-    if (now >= cutoff) {
-      return; // 🚫 DO NOTHING
-    }
     if (existingOrder) {
       cancelOrder();
     } else {
@@ -346,7 +290,8 @@
         document.getElementById('success-msg').classList.add('d-none');
       }, 3000);
     } else {
-      console.log(err);
+      const err = await res.json();
+      alert(JSON.stringify(err));
     }
   }
 
@@ -372,10 +317,6 @@
       alert(JSON.stringify(err));
     }
   }
-  const isClosed = checkCutoffUI();
-
-  if (!isClosed) {
-    loadSnacks();
-  }
+  loadSnacks();
 </script>
 {% endblock %}

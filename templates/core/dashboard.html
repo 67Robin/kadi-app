@@ -123,10 +123,13 @@
   const cutoff = new Date();
   cutoff.setHours(10, 30, 0, 0);
 
-  if (now >= cutoff) {
-    document.getElementById('order-form').classList.add('d-none');
+   if (now >= cutoff) {
     document.getElementById('locked-msg').classList.remove('d-none');
-    return;
+    document.getElementById('order-form').style.display = 'none'; // 🔥 stronger than class
+    return; // ❗ stop everything
+  } else {
+    document.getElementById('locked-msg').classList.add('d-none');
+    document.getElementById('order-form').style.display = 'block';
   }
   let cachedData = null;
 

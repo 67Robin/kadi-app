@@ -21,7 +21,7 @@
     <a href="/reconciliation/" class="k-btn k-btn-light" style="text-decoration: none;">
       <i class="bi bi-receipt"></i> Reconcile
     </a>
-    <button class="k-btn k-btn-dark" onclick="markAsOrdered()">
+    <button class="k-btn k-btn-dark" onclick="markAsOrdered(),sendWhatsApp()">
       <i class="bi bi-telephone-fill"></i> Mark as Ordered
     </button>
   </div>
@@ -173,7 +173,44 @@
     document.getElementById('ordered-msg').classList.remove('d-none');
     document.querySelector('button[onclick="markAsOrdered()"]').disabled = true;
   }
+  
+  async function sendWhatsApp() {
+  try {
+    const res = await fetch(API + '/admin/whatsapp-message/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
 
+    const data = await res.json();
+
+    // 🚨 No orders case
+    if (!data.message) {
+      alert("No orders for today");
+      return;
+    }
+
+    // 📱 Vendor number (CHANGE THIS)
+    const phone = "916282474421";
+
+    // 🔐 Encode message safely
+    const text = encodeURIComponent(data.message);
+
+    // 🔗 WhatsApp link
+    const url = `https://wa.me/${phone}?text=${text}`;
+
+    // 🚀 BEST METHOD (works on mobile + desktop)
+    window.location.href = url;
+
+    // 🔒 OPTIONAL: Lock orders after sending
+    await fetch(API + '/admin/mark-ordered/', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Error sending WhatsApp message");
+  }
+}
   loadAggregatedOrder();
 </script>
 {% endblock %}

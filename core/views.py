@@ -270,3 +270,32 @@ def cancel_order(request):
         return Response({'message': 'Order cancelled successfully'})
     except Order.DoesNotExist:
         return Response({'error': 'No order found for today'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAdminRole])
+def generate_whatsapp_message(request):
+    today = timezone.localdate()
+
+    items = OrderItem.objects.filter(
+        order__date=today,
+        quantity__gt=0
+    ).values('snack__name').annotate(
+        total_qty=Sum('quantity')
+    ).order_by('-total_qty')
+
+    if not items:
+        return Response({"message": None})
+
+    message = f"📦 Snack Order for {today}\n\n"
+
+    for item in items:
+        message += f"• {item['snack__name']} - {item['total_qty']}\n"
+
+    return Response({"message": message})
+
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def mark_as_ordered(request):
+    today = timezone.localdate()
+    Order.objects.filter(date=today).update(is_locked=True)
+    return Response({"message": "Orders locked"})

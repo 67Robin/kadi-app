@@ -182,42 +182,42 @@
     markAsOrdered();        // ✅ then update UI
   }
   async function sendWhatsApp() {
-    try {
-      const res = await fetch(API + '/admin/whatsapp-message/', {
-        headers: { 'Authorization': 'Bearer ' + getToken() }
-      });
+  try {
+    const res = await fetch(API + '/admin/whatsapp-message/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      // 🚨 No orders case
-      if (!data.message) {
-        alert("No orders for today");
-        return;
-      }
-
-      // 📱 Vendor number (CHANGE THIS)
-      const phone = "916282474421";
-
-      // 🔐 Encode message safely
-      const text = encodeURIComponent(data.message);
-
-      // 🔗 WhatsApp link
-      const url = `https://wa.me/${phone}?text=${text}`;
-
-      // 🔒 OPTIONAL: Lock orders after sending
-      await fetch(API + '/admin/mark-ordered/', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + getToken() }
-      });
-
-      // 🚀 BEST METHOD (works on mobile + desktop)
-      window.open(url, "_blank");
-
-    } catch (err) {
-      console.error(err);
-      alert("Error sending WhatsApp message");
+    if (!data.message) {
+      alert("No orders for today");
+      return;
     }
+
+    const phone = "916282474421";
+    const text = encodeURIComponent(data.message);
+    const url = `https://wa.me/${phone}?text=${text}`;
+
+    // ✅ Try open
+    const win = window.open(url, "_blank");
+
+    // ✅ If blocked → fallback
+    if (!win) {
+      alert("Popup blocked! Opening in same tab...");
+      window.location.href = url;
+    }
+
+    // 🔒 Lock orders
+    await fetch(API + '/admin/mark-ordered/', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Error sending WhatsApp message");
   }
+}
   loadAggregatedOrder();
 </script>
 {% endblock %}

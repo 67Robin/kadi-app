@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
-from .views import generate_whatsapp_message
+from .views import generate_whatsapp_message, mark_as_ordered
 
 router = DefaultRouter()
 router.register(r'snacks', views.SnackItemViewSet, basename='snack')

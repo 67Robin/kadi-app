@@ -286,7 +286,7 @@ def generate_whatsapp_message(request):
     if not items:
         return Response({"message": None})
 
-    message = f" Snack Order for {today}\n\n"
+    message = f"Snack Order for {today}\n\n"
 
     for item in items:
         message += f"• {item['snack__name']} - {item['total_qty']}\n"

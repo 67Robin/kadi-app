@@ -2,7 +2,6 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
-from .views import *
 
 router = DefaultRouter()
 router.register(r'snacks', views.SnackItemViewSet, basename='snack')
@@ -19,5 +18,4 @@ urlpatterns = [
     path('users/', views.users_list, name='users'),
     path('orders/cancel/', views.cancel_order, name='cancel_order'),
     path('', include(router.urls)),
-    path('api/admin/whatsapp-message/', generate_whatsapp_message),
 ]

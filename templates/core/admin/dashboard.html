@@ -21,7 +21,7 @@
     <a href="/reconciliation/" class="k-btn k-btn-light" style="text-decoration: none;">
       <i class="bi bi-receipt"></i> Reconcile
     </a>
-    <button class="k-btn k-btn-dark" onclick="markAsOrdered()">
+    <button class="k-btn k-btn-dark" onclick="markAsOrdered(),sendWhatsappMessage()">
       <i class="bi bi-telephone-fill"></i> Mark as Ordered
     </button>
   </div>
@@ -173,6 +173,29 @@
     document.getElementById('ordered-msg').classList.remove('d-none');
     document.querySelector('button[onclick="markAsOrdered()"]').disabled = true;
   }
+
+  async function sendWhatsApp() {
+  try {
+    const res = await fetch(API + '/admin/whatsapp-message/', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
+    const data = await res.json();
+
+    // 🔥 replace with vendor number (no +)
+    const phone = "916282474421";
+
+    const text = encodeURIComponent(data.message);
+
+    const url = `https://wa.me/${phone}?text=${text}`;
+
+    window.open(url, '_blank');
+
+  } catch (err) {
+    alert("Error sending WhatsApp message");
+    console.error(err);
+  }
+}
 
   loadAggregatedOrder();
 </script>

@@ -464,14 +464,15 @@
                 body: JSON.stringify({ email, otp, password })
             });
 
+            const text = await res.text();   // ✅ read ONLY ONCE
+
             let data;
 
             try {
-                data = await res.json();
+                data = JSON.parse(text);     // try parse JSON
             } catch (e) {
-                const text = await res.text();
-                console.error("SERVER ERROR:", text);
-                alert("Server error (check console)");
+                console.error("RAW RESPONSE:", text);
+                alert("Server error (not JSON)");
                 return;
             }
 
@@ -480,6 +481,8 @@
             } else {
                 alert(data.error || "Failed");
             }
+            console.log("EMAIL:", email)
+            console.log("OTP INPUT:", otp)
         }
     </script>
 </body>

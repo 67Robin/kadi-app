@@ -213,8 +213,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760 * 5   # 50MB
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:8000")
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+DEFAULT_FROM_EMAIL = "Kadi App <no-reply@kadi.app>"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache"

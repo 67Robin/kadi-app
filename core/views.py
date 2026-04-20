@@ -377,6 +377,7 @@ def mark_as_ordered(request):
 
 User = get_user_model()
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def request_password_reset(request):
 
     email = request.data.get('email')
@@ -409,10 +410,9 @@ def request_password_reset(request):
 
     )
 
-    return Response({"message": "Reset link sent"})
+    return Response({"message": "If email exists, reset link sent"})
 
 @api_view(['POST'])
-
 def confirm_password_reset(request):
 
     uid = request.data.get('uid')

@@ -11,11 +11,14 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
 from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes,force_str
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from .utils import password_reset_token
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -380,65 +383,44 @@ User = get_user_model()
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def request_password_reset(request):
-
     email = request.data.get('email')
 
     try:
-
         user = User.objects.get(email=email)
 
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_link = f"http://kadi.up.railway.app/reset-password/{uid}/{token}/"
+
+        send_mail(
+            'Password Reset',
+            f'Click to reset your password:\n{reset_link}',
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+
     except User.DoesNotExist:
-
-        return Response({"message": "If email exists, reset link sent"})
-
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-    token = password_reset_token.make_token(user)
-
-    domain = request.get_host()
-    reset_link = f"http://{domain}/reset-password/{uid}/{token}/"
-
-    send_mail(
-
-        "Reset your password",
-
-        f"Click here to reset: {reset_link}",
-
-        settings.EMAIL_HOST_USER,
-
-        [email],
-
-        fail_silently=False,
-
-    )
+        pass  
 
     return Response({"message": "If email exists, reset link sent"})
 
 @api_view(['POST'])
-def confirm_password_reset(request):
-
-    uid = request.data.get('uid')
-
-    token = request.data.get('token')
-
-    new_password = request.data.get('password')
-
+@permission_classes([AllowAny])
+def confirm_password_reset(request, uidb64, token):
     try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
 
-        user_id = urlsafe_base64_decode(uid).decode()
+        if not default_token_generator.check_token(user, token):
+            return Response({"error": "Invalid token"}, status=400)
 
-        user = User.objects.get(pk=user_id)
+        password = request.data.get('password')
+        user.set_password(password)
+        user.save()
 
-    except:
+        return Response({"message": "Password reset successful"})
 
-        return Response({"error": "Invalid link"}, status=400)
-
-    if not password_reset_token.check_token(user, token):
-
-        return Response({"error": "Invalid or expired token"}, status=400)
-
-    user.password = make_password(new_password)
-
-    user.save()
-
-    return Response({"message": "Password reset successful"})
+    except Exception:
+        return Response({"error": "Invalid request"}, status=400)

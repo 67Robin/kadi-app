@@ -443,7 +443,7 @@
 
                 if (!res.ok) {
 
-                    const text = await res.text();   // 👈 VERY IMPORTANT
+                    const text = await res.json();   // 👈 VERY IMPORTANT
 
                     console.error("SERVER ERROR:", text);
 

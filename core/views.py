@@ -1,5 +1,6 @@
 from django.db.models import Sum
 from django.utils import timezone
+from django.shortcuts import render
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -10,7 +11,6 @@ from datetime import datetime, time
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes,force_str
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
@@ -380,70 +380,85 @@ def mark_as_ordered(request):
 
 
 User = get_user_model()
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def send_reset_link(request):
-    try:
-        email = request.data.get("email")
-
-        if not email:
-            return Response({"error": "Email required"}, status=400)
-
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({"message": "If email exists, link sent"})
-
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.http import urlsafe_base64_encode
-        from django.utils.encoding import force_bytes
-
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        frontend = getattr(settings, "FRONTEND_URL", "http://127.0.0.1:8000")
-
-        reset_link = f"{frontend}/reset-password/{uid}/{token}/"
-
-        print("RESET LINK:", reset_link)  # 👈 DEBUG
-
-        from django.core.mail import send_mail
-
-        send_mail(
-            "Reset Password - Kadi",
-            f"Click here:\n{reset_link}",
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False
-        )
-
-        return Response({"message": "Reset link sent"})
-
-    except Exception as e:
-        print("RESET ERROR:", str(e))   # 👈 THIS IS KEY
-        return Response({"error": str(e)}, status=500)
 
 @api_view(['POST'])
+
 @permission_classes([AllowAny])
-def reset_password_confirm(request, uid, token):
+
+def set_new_password(request):
+
+    uid = request.data.get("uid")
+
+    token = request.data.get("token")
+
     password = request.data.get("password")
 
-    if not password:
-        return Response({"error": "Password required"}, status=400)
-
     try:
-        uid = urlsafe_base64_decode(uid).decode()
-        user = User.objects.get(pk=uid)
-    except:
-        return Response({"error": "Invalid link"}, status=400)
 
-    if not default_token_generator.check_token(user, token):
-        return Response({"error": "Invalid or expired token"}, status=400)
+        user_id = urlsafe_base64_decode(uid).decode()
 
-    user.set_password(password)
-    user.save()
+        user = User.objects.get(id=user_id)
 
-    return Response({"message": "Password reset successful"})
+        if not default_token_generator.check_token(user, token):
+
+            return Response({"error": "Invalid token"}, status=400)
+
+        user.password = make_password(password)
+
+        user.save()
+
+        return Response({"message": "Password reset successful"})
+
+    except Exception as e:
+
+        return Response({"error": str(e)}, status=400)
 
 def reset_password_page(request, uid, token):
-    return render(request, 'core/reset_password.html')
+    return render(request, "reset_password.html")
+
+
+import requests
+from django.conf import settings
+
+def send_reset_email(email, reset_link):
+    url = "https://api.resend.com/emails"
+
+    headers = {
+        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "from": "Kadi App <onboarding@resend.dev>",
+        "to": [email],
+        "subject": "Reset Your Password",
+        "html": f"""
+            <h3>Password Reset</h3>
+            <p>Click below to reset your password:</p>
+            <a href="{reset_link}">{reset_link}</a>
+        """
+    }
+
+    requests.post(url, json=data, headers=headers)
+
+@api_view(['POST'])
+
+@permission_classes([AllowAny])
+
+def send_reset_link(request):
+
+    email = request.data.get("email")
+
+    user = User.objects.filter(email=email).first()
+
+    if user:
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        token = default_token_generator.make_token(user)
+
+        reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+
+        send_reset_email(email, reset_link)
+
+    return Response({"message": "If email exists, link sent"})

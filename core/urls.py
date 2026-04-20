@@ -2,9 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
-from .views import generate_whatsapp_message, mark_as_ordered,send_reset_link,reset_password_confirm
+from .views import generate_whatsapp_message, mark_as_ordered,send_reset_link,reset_password_confirm,reset_password_page
 
-FRONTEND_URL = "https://kadi.up.railway.app"
 
 router = DefaultRouter()
 router.register(r'snacks', views.SnackItemViewSet, basename='snack')
@@ -25,5 +24,6 @@ urlpatterns = [
     path('admin/mark-ordered/', mark_as_ordered),
     path('history/', views.user_history),
     path('auth/reset-password/', send_reset_link),
-    path('auth/reset-password-confirm/<uid>/<token>/', reset_password_confirm),
+    path('auth/set-new-password/', set_new_password),
+
 ]

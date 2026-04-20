@@ -20,6 +20,7 @@ from core import views as template_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from core.views import reset_password_page
 
 def home(request):
     return HttpResponse("Kadi Backend Running 🚀")
@@ -36,5 +37,5 @@ urlpatterns = [
     path('manage/snacks/', template_views.snacks_management_view),
     path('history/', template_views.history_view),
     path('reconciliation/', template_views.reconciliation_view),
-    path('reset-password/<uid>/<token>/', template_views.reset_password_page),
+    path('reset-password/<uid>/<token>/', reset_password_page),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

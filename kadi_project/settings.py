@@ -206,6 +206,12 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', defaul
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 * 5   # 50MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760 * 5   # 50MB
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'researchdevelopment.ohac@gmail.com'
+EMAIL_HOST_PASSWORD = 'axea nnzx loaa cvvc'
 
 CACHES = {
     "default": {

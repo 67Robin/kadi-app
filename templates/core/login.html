@@ -287,9 +287,22 @@
                     </button>
                 </div>
             </div>
+            <p style="text-align:right; margin-top:8px;">
+                <a href="#" onclick="showReset()" style="font-size:0.85rem;">
+                    Forgot Password?
+                </a>
+            </p>
             <button class="login-btn" onclick="doLogin()" id="login-btn">
                 Sign In
             </button>
+
+            <div id="reset-box" style="display:none; margin-top:15px;">
+                <input type="email" id="reset-email" placeholder="Enter your email"
+                    style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">
+                <button onclick="sendResetLink()" style="margin-top:10px; width:100%;">
+                    Send Reset Link
+                </button>
+            </div>
 
             <div class="divider">Kadi App v1.0</div>
         </div>
@@ -398,6 +411,49 @@
 
             }, 120);
         });
+        function showReset() {
+
+            document.getElementById('reset-box').style.display = 'block';
+
+        }
+
+        async function sendResetLink() {
+
+            const email = document.getElementById('reset-email').value;
+
+            if (!email) {
+
+                alert("Enter email");
+
+                return;
+
+            }
+
+            try {
+
+                const res = await fetch(API + '/auth/reset-password/', {
+
+                    method: 'POST',
+
+                    headers: { 'Content-Type': 'application/json' },
+
+                    body: JSON.stringify({ email })
+
+                });
+
+                const data = await res.json();
+
+                alert(data.message || "If email exists, link sent");
+
+            } catch (err) {
+
+                console.error(err);
+
+                alert("Error sending reset link");
+
+            }
+
+        }
     </script>
 </body>
 

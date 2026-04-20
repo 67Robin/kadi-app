@@ -9,6 +9,12 @@ from datetime import datetime, time
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from .utils import password_reset_token
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -367,3 +373,70 @@ def mark_as_ordered(request):
     today = timezone.localdate()
     Order.objects.filter(date=today).update(is_locked=True)
     return Response({"message": "Orders locked"})
+
+
+User = get_user_model()
+@api_view(['POST'])
+def request_password_reset(request):
+
+    email = request.data.get('email')
+
+    try:
+
+        user = User.objects.get(email=email)
+
+    except User.DoesNotExist:
+
+        return Response({"message": "If email exists, reset link sent"})
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    token = password_reset_token.make_token(user)
+
+    reset_link = f"https://yourdomain.com/reset-password/{uid}/{token}/"
+
+    send_mail(
+
+        "Reset your password",
+
+        f"Click here to reset: {reset_link}",
+
+        settings.EMAIL_HOST_USER,
+
+        [email],
+
+        fail_silently=False,
+
+    )
+
+    return Response({"message": "Reset link sent"})
+
+@api_view(['POST'])
+
+def confirm_password_reset(request):
+
+    uid = request.data.get('uid')
+
+    token = request.data.get('token')
+
+    new_password = request.data.get('password')
+
+    try:
+
+        user_id = urlsafe_base64_decode(uid).decode()
+
+        user = User.objects.get(pk=user_id)
+
+    except:
+
+        return Response({"error": "Invalid link"}, status=400)
+
+    if not password_reset_token.check_token(user, token):
+
+        return Response({"error": "Invalid or expired token"}, status=400)
+
+    user.password = make_password(new_password)
+
+    user.save()
+
+    return Response({"message": "Password reset successful"})

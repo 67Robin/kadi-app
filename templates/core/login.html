@@ -424,66 +424,6 @@
 
             }, 120);
         });
-        function showReset() {
-
-            document.getElementById('reset-box').style.display = 'block';
-
-        }
-
-        async function sendOTP() {
-
-            const email = document.getElementById('reset-email').value;
-
-            if (!email) {
-                alert("Enter email");
-                return;
-            }
-
-            const res = await fetch(API + '/auth/send-otp/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-
-            alert("OTP sent (check backend logs for now)");
-        }
-        async function verifyOtp() {
-
-            const email = document.getElementById('reset-email').value;
-            const otp = document.getElementById('otp').value;
-            const password = document.getElementById('new-password').value;
-
-            if (!otp || !password) {
-                alert("Enter OTP and password");
-                return;
-            }
-
-            const res = await fetch(API + '/auth/verify-otp/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, otp, password })
-            });
-
-            const text = await res.text();   // ✅ read ONLY ONCE
-
-            let data;
-
-            try {
-                data = JSON.parse(text);     // try parse JSON
-            } catch (e) {
-                console.error("RAW RESPONSE:", text);
-                alert("Server error (not JSON)");
-                return;
-            }
-
-            if (res.ok) {
-                alert("Password reset successful");
-            } else {
-                alert(data.error || "Failed");
-            }
-            console.log("EMAIL:", email)
-            console.log("OTP INPUT:", otp)
-        }
     </script>
 </body>
 

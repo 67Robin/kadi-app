@@ -422,6 +422,8 @@ from django.conf import settings
 
 import requests
 
+import requests
+
 def send_reset_email(email, reset_link):
     url = "https://api.resend.com/emails"
 
@@ -443,8 +445,9 @@ def send_reset_email(email, reset_link):
 
     response = requests.post(url, json=data, headers=headers)
 
-    print("RESEND STATUS:", response.status_code)
-    print("RESEND RESPONSE:", response.text)
+    print("EMAIL:", email)
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
 @api_view(['POST'])
 

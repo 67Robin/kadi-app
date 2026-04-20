@@ -383,28 +383,40 @@ User = get_user_model()
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def request_password_reset(request):
-    email = request.data.get('email')
-
     try:
-        user = User.objects.get(email=email)
+        email = request.data.get('email')
 
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
+        if not email:
+            return Response({"error": "Email required"}, status=400)
 
-        reset_link = f"http://kadi.up.railway.app/reset-password/{uid}/{token}/"
+        user = User.objects.filter(email=email).first()
 
-        send_mail(
-            'Password Reset',
-            f'Click to reset your password:\n{reset_link}',
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-        )
+        if user:
+            from django.utils.http import urlsafe_base64_encode
+            from django.utils.encoding import force_bytes
+            from django.contrib.auth.tokens import default_token_generator
+            from django.core.mail import send_mail
+            from django.conf import settings
 
-    except User.DoesNotExist:
-        pass  
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
 
-    return Response({"message": "If email exists, reset link sent"})
+            reset_link = f"https://kadi.up.railway.app/reset/{uid}/{token}/"
+
+            send_mail(
+                "Reset Password",
+                f"Click:\n{reset_link}",
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+
+        return Response({"message": "If email exists, reset link sent"})
+
+    except Exception as e:
+        return Response({
+            "error": str(e),        # 🔥 THIS WILL SHOW REAL ERROR IN FRONTEND
+        }, status=500)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

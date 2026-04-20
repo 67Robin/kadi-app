@@ -383,35 +383,45 @@ User = get_user_model()
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def send_reset_link(request):
-    email = request.data.get("email")
-
-    if not email:
-        return Response({"error": "Email required"}, status=400)
-
     try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"message": "If email exists, link sent"})
+        email = request.data.get("email")
 
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    token = default_token_generator.make_token(user)
+        if not email:
+            return Response({"error": "Email required"}, status=400)
 
-    # 🔗 CHANGE THIS DOMAIN (IMPORTANT)
-    reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"message": "If email exists, link sent"})
 
-    try:
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        frontend = getattr(settings, "FRONTEND_URL", "http://127.0.0.1:8000")
+
+        reset_link = f"{frontend}/reset-password/{uid}/{token}/"
+
+        print("RESET LINK:", reset_link)  # 👈 DEBUG
+
+        from django.core.mail import send_mail
+
         send_mail(
-            "Reset Password",
-            f"Click link: {reset_link}",
+            "Reset Password - Kadi",
+            f"Click here:\n{reset_link}",
             settings.EMAIL_HOST_USER,
             [email],
             fail_silently=False
         )
-    except Exception as e:
-        print("EMAIL ERROR:", e)
-        return Response({"error": "Email failed"}, status=500)
 
-    return Response({"message": "Reset link sent"})
+        return Response({"message": "Reset link sent"})
+
+    except Exception as e:
+        print("RESET ERROR:", str(e))   # 👈 THIS IS KEY
+        return Response({"error": str(e)}, status=500)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

@@ -222,11 +222,12 @@ def snacks_management_view(request):
 
 def history_view(request):
     today = timezone.localdate()
+    user = request.user
 
     data = (
     OrderItem.objects
     .select_related('snack', 'order')   # 🔥 IMPORTANT
-    .filter(order__date=today, quantity__gt=0)
+    .filter(order__date=today,order__user=user, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity')).order_by('-total_qty')
 )

@@ -20,7 +20,6 @@ from core import views as template_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
-from core.views import reset_password_page
 
 def home(request):
     return HttpResponse("Kadi Backend Running 🚀")

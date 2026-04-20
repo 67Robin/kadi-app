@@ -193,6 +193,7 @@ cloudinary.config(
 
 from datetime import timedelta
 import os
+FRONTEND_URL = "https://kadi.up.railway.app"
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 FRONTEND_URL = "https://kadi.up.railway.app"

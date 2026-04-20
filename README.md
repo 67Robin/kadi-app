@@ -33,3 +33,26 @@ It simplifies daily snack management by aggregating orders, enforcing deadlines,
 ```bash
 git clone https://github.com/your-username/kadi.git
 cd kadi
+```
+### 2. Create virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+### 4. Run migrations
+```bash
+python manage.py migrate
+```
+### 5. Create superuser
+```bash
+python manage.py createsuperuser
+```
+### 6. Run the server
+```bash
+python manage.py runserver
+```
+

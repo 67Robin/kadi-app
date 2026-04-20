@@ -395,7 +395,8 @@ def request_password_reset(request):
 
     token = password_reset_token.make_token(user)
 
-    reset_link = f"https://yourdomain.com/reset-password/{uid}/{token}/"
+    domain = request.get_host()
+    reset_link = f"http://{domain}/reset-password/{uid}/{token}/"
 
     send_mail(
 

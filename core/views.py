@@ -223,78 +223,66 @@ def snacks_management_view(request):
 
 
 @api_view(['GET'])
-
 @permission_classes([IsAuthenticated])
-
 def user_history(request):
+    user = request.user
+
 
     today = timezone.localdate()
-
-    data = (
-
-        OrderItem.objects
-
-        .select_related('snack', 'order')
-
-        .filter(
-
-            order__date=today,
-
-            order__user=request.user,   # ✅ only current user
-
-            quantity__gt=0
-
-        )
-
-        .values('snack__name', 'snack__price', 'snack__image')
-
-        .annotate(total_qty=Sum('quantity'))
-
-        .order_by('-total_qty')
-
+    start_date = today - timedelta(days=30)
+    orders = (
+    Order.objects
+    .filter(
+        user=user,
+        date__gte=start_date
     )
+    .prefetch_related('items__snack')
+    .order_by('-date')
 
-    items = []
+)
 
-    for item in data:
+    response = []
 
-        image_url = None
+    for order in orders:
+        items_data = []
+        total = 0
 
-        raw = item.get('snack__image')
+        for item in order.items.all():
+            if item.quantity <= 0:
+                continue
 
-        if raw:
+            price = float(item.snack.price)
+            subtotal = price * item.quantity
+            total += subtotal
 
-            raw = str(raw)
+            # image handling
+            image_url = None
+            raw = item.snack.image
 
-            if raw.startswith('http'):
+            if raw:
+                raw = str(raw)
+                if raw.startswith('http'):
+                    image_url = raw
+                else:
+                    import cloudinary
+                    cloud_name = cloudinary.config().cloud_name
+                    image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
 
-                image_url = raw
+            items_data.append({
+                "snack_name": item.snack.name,
+                "snack_price": str(item.snack.price),
+                "quantity": item.quantity,
+                "snack_image_url": image_url
+            })
 
-            else:
+        if items_data:
+            response.append({
+                "date": order.date,
+                "total": round(total, 2),
+                "items": items_data
+            })
 
-                import cloudinary
-
-                cloud_name = cloudinary.config().cloud_name
-
-                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
-
-        items.append({
-
-            'name': item['snack__name'],
-
-            'price': item['snack__price'],
-
-            'image_url': image_url,
-
-            'qty': item['total_qty'],
-
-        })
-
-    return Response({
-
-        'items': items
-
-    })
+    return Response(response)
 def history_view(request):
     today = timezone.localdate()
 

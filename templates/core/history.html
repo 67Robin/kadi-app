@@ -52,7 +52,8 @@
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     if (res.status === 401) { window.location.href = '/login/'; return; }
-    const orders = await res.json();
+    const data = await res.json();
+    const orders = data.items;
     renderHistory(orders);
     calcStats(orders);
   }

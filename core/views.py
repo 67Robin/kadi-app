@@ -399,13 +399,17 @@ def send_reset_link(request):
     # 🔗 CHANGE THIS DOMAIN (IMPORTANT)
     reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
 
-    send_mail(
-        "Reset Your Password - Kadi",
-        f"Click the link to reset your password:\n\n{reset_link}",
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            "Reset Password",
+            f"Click link: {reset_link}",
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False
+        )
+    except Exception as e:
+        print("EMAIL ERROR:", e)
+        return Response({"error": "Email failed"}, status=500)
 
     return Response({"message": "Reset link sent"})
 

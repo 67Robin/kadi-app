@@ -420,6 +420,8 @@ def reset_password_page(request, uid, token):
 import requests
 from django.conf import settings
 
+import requests
+
 def send_reset_email(email, reset_link):
     url = "https://api.resend.com/emails"
 
@@ -439,7 +441,10 @@ def send_reset_email(email, reset_link):
         """
     }
 
-    requests.post(url, json=data, headers=headers)
+    response = requests.post(url, json=data, headers=headers)
+
+    print("RESEND STATUS:", response.status_code)
+    print("RESEND RESPONSE:", response.text)
 
 @api_view(['POST'])
 

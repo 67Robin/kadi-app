@@ -31,7 +31,7 @@ It simplifies daily snack management by aggregating orders, enforcing deadlines,
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/kadi.git
+git clone https://github.com/67Robin/kadi.git
 cd kadi
 ```
 ### 2. Create virtual environment

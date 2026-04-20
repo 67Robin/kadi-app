@@ -8,6 +8,7 @@ from django.conf import settings
 from datetime import datetime, time
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.cache import cache
+from rest_framework.permissions import IsAuthenticated
 
 from .models import User, SnackItem, Order, OrderItem
 from .serializers import (
@@ -220,14 +221,87 @@ def users_management_view(request):
 def snacks_management_view(request):
     return render(request, 'core/admin/snacks.html')
 
+
+@api_view(['GET'])
+
+@permission_classes([IsAuthenticated])
+
+def user_history(request):
+
+    today = timezone.localdate()
+
+    data = (
+
+        OrderItem.objects
+
+        .select_related('snack', 'order')
+
+        .filter(
+
+            order__date=today,
+
+            order__user=request.user,   # ✅ only current user
+
+            quantity__gt=0
+
+        )
+
+        .values('snack__name', 'snack__price', 'snack__image')
+
+        .annotate(total_qty=Sum('quantity'))
+
+        .order_by('-total_qty')
+
+    )
+
+    items = []
+
+    for item in data:
+
+        image_url = None
+
+        raw = item.get('snack__image')
+
+        if raw:
+
+            raw = str(raw)
+
+            if raw.startswith('http'):
+
+                image_url = raw
+
+            else:
+
+                import cloudinary
+
+                cloud_name = cloudinary.config().cloud_name
+
+                image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+
+        items.append({
+
+            'name': item['snack__name'],
+
+            'price': item['snack__price'],
+
+            'image_url': image_url,
+
+            'qty': item['total_qty'],
+
+        })
+
+    return Response({
+
+        'items': items
+
+    })
 def history_view(request):
     today = timezone.localdate()
-    user = request.user
 
     data = (
     OrderItem.objects
     .select_related('snack', 'order')   # 🔥 IMPORTANT
-    .filter(order__date=today,order__user=request.user, quantity__gt=0)
+    .filter(order__date=today, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity')).order_by('-total_qty')
 )

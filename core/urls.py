@@ -21,4 +21,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('admin/whatsapp-message/', generate_whatsapp_message),
     path('admin/mark-ordered/', mark_as_ordered),
+    path('history/', views.user_history),
 ]

@@ -11,13 +11,7 @@ from datetime import datetime, time
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
-from django.utils.encoding import force_bytes,force_str
-from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
-from .utils import password_reset_token
-from django.core.mail import send_mail
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+import random
 
 
 
@@ -379,78 +373,53 @@ def mark_as_ordered(request):
     Order.objects.filter(date=today).update(is_locked=True)
     return Response({"message": "Orders locked"})
 
-
-User = get_user_model()
+def generate_otp():
+    return str(random.randint(100000, 999999))
 
 @api_view(['POST'])
-
 @permission_classes([AllowAny])
-
-def set_new_password(request):
-
-    uid = request.data.get("uid")
-
-    token = request.data.get("token")
-
-    password = request.data.get("password")
-
-    try:
-
-        user_id = urlsafe_base64_decode(uid).decode()
-
-        user = User.objects.get(id=user_id)
-
-        if not default_token_generator.check_token(user, token):
-
-            return Response({"error": "Invalid token"}, status=400)
-
-        user.password = make_password(password)
-
-        user.save()
-
-        return Response({"message": "Password reset successful"})
-
-    except Exception as e:
-
-        return Response({"error": str(e)}, status=400)
-
-def reset_password_page(request, uid, token):
-    return render(request, "reset_password.html")
-
-def send_reset_email(email, reset_link):
-    send_mail(
-        subject="Reset Your Password",
-        message=f"""
-                  Hi,
-
-                  Click the link below to reset your password:
-
-                  {reset_link}
-
-                  If you didn’t request this, ignore this email.
-        """,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
-    )
-@api_view(['POST'])
-
-@permission_classes([AllowAny])
-
-def send_reset_link(request):
-
+def send_otp(request):
     email = request.data.get("email")
 
     user = User.objects.filter(email=email).first()
 
-    if user:
+    # Always return success (security)
+    if not user:
+        return Response({"message": "If account exists, OTP sent"})
 
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
+    otp = generate_otp()
 
-        token = default_token_generator.make_token(user)
+    # Store OTP (5 min expiry)
+    cache.set(f"otp_{email}", otp, timeout=300)
 
-        reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+    # TEMP: print OTP (for testing)
+    print(f"OTP for {email}: {otp}")
 
-        send_reset_email(email, reset_link)
+    return Response({"message": "OTP sent"})
 
-    return Response({"message": "If email exists, link sent"})
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp_reset(request):
+    email = request.data.get("email")
+    otp = request.data.get("otp")
+    password = request.data.get("password")
+
+    stored_otp = cache.get(f"otp_{email}")
+
+    if not stored_otp:
+        return Response({"error": "OTP expired"}, status=400)
+
+    if stored_otp != otp:
+        return Response({"error": "Invalid OTP"}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+        user.password = make_password(password)
+        user.save()
+
+        cache.delete(f"otp_{email}")
+
+        return Response({"message": "Password reset successful"})
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)

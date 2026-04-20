@@ -2,8 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
-from .views import generate_whatsapp_message, mark_as_ordered, send_reset_link, reset_password_page, set_new_password
-
+from .views import generate_whatsapp_message, mark_as_ordered
 
 router = DefaultRouter()
 router.register(r'snacks', views.SnackItemViewSet, basename='snack')
@@ -23,7 +22,8 @@ urlpatterns = [
     path('admin/whatsapp-message/', generate_whatsapp_message),
     path('admin/mark-ordered/', mark_as_ordered),
     path('history/', views.user_history),
-    path('auth/reset-password/', send_reset_link),
-    path('auth/set-new-password/', set_new_password),
+    path('auth/send-otp/', views.send_otp),
+    path('auth/verify-otp/', views.verify_otp_reset),
+ 
 
 ]

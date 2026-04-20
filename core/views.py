@@ -225,21 +225,18 @@ def snacks_management_view(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_history(request):
+    from datetime import timedelta
+
     user = request.user
-
-
     today = timezone.localdate()
     start_date = today - timedelta(days=30)
-    orders = (
-    Order.objects
-    .filter(
-        user=user,
-        date__gte=start_date
-    )
-    .prefetch_related('items__snack')
-    .order_by('-date')
 
-)
+    orders = (
+        Order.objects
+        .filter(user=user, date__gte=start_date)
+        .prefetch_related('items__snack')
+        .order_by('-date')
+    )
 
     response = []
 
@@ -251,22 +248,30 @@ def user_history(request):
             if item.quantity <= 0:
                 continue
 
-            price = float(item.snack.price)
+            try:
+                price = float(item.snack.price)
+            except:
+                price = 0
+
             subtotal = price * item.quantity
             total += subtotal
 
-            # image handling
+            # ✅ SAFE IMAGE HANDLING
             image_url = None
-            raw = item.snack.image
+            try:
+                raw = getattr(item.snack, 'image', None)
 
-            if raw:
-                raw = str(raw)
-                if raw.startswith('http'):
-                    image_url = raw
-                else:
-                    import cloudinary
-                    cloud_name = cloudinary.config().cloud_name
-                    image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+                if raw:
+                    raw = str(raw)
+                    if raw.startswith('http'):
+                        image_url = raw
+                    else:
+                        import cloudinary
+                        cloud_name = cloudinary.config().cloud_name
+                        if cloud_name:
+                            image_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{raw}"
+            except:
+                image_url = None
 
             items_data.append({
                 "snack_name": item.snack.name,
@@ -277,7 +282,7 @@ def user_history(request):
 
         if items_data:
             response.append({
-                "date": order.date,
+                "date": str(order.date),   # ✅ IMPORTANT (fix JSON issue)
                 "total": round(total, 2),
                 "items": items_data
             })

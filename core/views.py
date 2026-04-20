@@ -382,57 +382,54 @@ def mark_as_ordered(request):
 User = get_user_model()
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def request_password_reset(request):
+def send_reset_link(request):
+    email = request.data.get("email")
+
+    if not email:
+        return Response({"error": "Email required"}, status=400)
+
     try:
-        email = request.data.get('email')
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"message": "If email exists, link sent"})
 
-        if not email:
-            return Response({"error": "Email required"}, status=400)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
 
-        user = User.objects.filter(email=email).first()
+    # 🔗 CHANGE THIS DOMAIN (IMPORTANT)
+    reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
 
-        if user:
-            from django.utils.http import urlsafe_base64_encode
-            from django.utils.encoding import force_bytes
-            from django.contrib.auth.tokens import default_token_generator
-            from django.core.mail import send_mail
-            from django.conf import settings
+    send_mail(
+        "Reset Your Password - Kadi",
+        f"Click the link to reset your password:\n\n{reset_link}",
+        settings.EMAIL_HOST_USER,
+        [email],
+        fail_silently=False,
+    )
 
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-
-            reset_link = f"https://kadi.up.railway.app/reset/{uid}/{token}/"
-
-            send_mail(
-                "Reset Password",
-                f"Click:\n{reset_link}",
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently=False,
-            )
-
-        return Response({"message": "If email exists, reset link sent"})
-
-    except Exception as e:
-        return Response({
-            "error": str(e),        # 🔥 THIS WILL SHOW REAL ERROR IN FRONTEND
-        }, status=500)
+    return Response({"message": "Reset link sent"})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def confirm_password_reset(request, uidb64, token):
+def reset_password_confirm(request, uid, token):
+    password = request.data.get("password")
+
+    if not password:
+        return Response({"error": "Password required"}, status=400)
+
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
+        uid = urlsafe_base64_decode(uid).decode()
         user = User.objects.get(pk=uid)
+    except:
+        return Response({"error": "Invalid link"}, status=400)
 
-        if not default_token_generator.check_token(user, token):
-            return Response({"error": "Invalid token"}, status=400)
+    if not default_token_generator.check_token(user, token):
+        return Response({"error": "Invalid or expired token"}, status=400)
 
-        password = request.data.get('password')
-        user.set_password(password)
-        user.save()
+    user.set_password(password)
+    user.save()
 
-        return Response({"message": "Password reset successful"})
+    return Response({"message": "Password reset successful"})
 
-    except Exception:
-        return Response({"error": "Invalid request"}, status=400)
+def reset_password_page(request, uid, token):
+    return render(request, 'core/reset_password.html')

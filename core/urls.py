@@ -22,6 +22,6 @@ urlpatterns = [
     path('admin/whatsapp-message/', generate_whatsapp_message),
     path('admin/mark-ordered/', mark_as_ordered),
     path('history/', views.user_history),
-    path('auth/reset-request/', views.request_password_reset),
+    path('auth/reset-password/', views.request_password_reset),
     path('auth/reset-confirm/', views.confirm_password_reset),
 ]

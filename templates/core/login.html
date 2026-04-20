@@ -449,29 +449,38 @@
         }
         async function verifyOtp() {
 
-    const email = document.getElementById('reset-email').value;
-    const otp = document.getElementById('otp').value;
-    const password = document.getElementById('new-password').value;
+            const email = document.getElementById('reset-email').value;
+            const otp = document.getElementById('otp').value;
+            const password = document.getElementById('new-password').value;
 
-    if (!otp || !password) {
-        alert("Enter OTP and password");
-        return;
-    }
+            if (!otp || !password) {
+                alert("Enter OTP and password");
+                return;
+            }
 
-    const res = await fetch(API + '/auth/verify-otp/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, password })
-    });
+            const res = await fetch(API + '/auth/verify-otp/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, password })
+            });
 
-    const data = await res.json();
+            let data;
 
-    if (res.ok) {
-        alert("✅ Password reset successful");
-    } else {
-        alert(data.error || "Failed");
-    }
-}
+            try {
+                data = await res.json();
+            } catch (e) {
+                const text = await res.text();
+                console.error("SERVER ERROR:", text);
+                alert("Server error (check console)");
+                return;
+            }
+
+            if (res.ok) {
+                alert("Password reset successful");
+            } else {
+                alert(data.error || "Failed");
+            }
+        }
     </script>
 </body>
 

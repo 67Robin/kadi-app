@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/mark-ordered/', mark_as_ordered),
     path('history/', views.user_history),
     path('auth/send-otp/', views.send_otp),
-    path('auth/verify-otp/', views.verify_otp_reset),
+    path('auth/verify-otp/', views.verify_otp),
  
 
 ]

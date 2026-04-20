@@ -381,45 +381,51 @@ def generate_otp():
 def send_otp(request):
     email = request.data.get("email")
 
+    if not email:
+        return Response({"error": "Email required"}, status=400)
+
     user = User.objects.filter(email=email).first()
 
-    # Always return success (security)
     if not user:
-        return Response({"message": "If account exists, OTP sent"})
+        return Response({"error": "User not found"}, status=404)
 
-    otp = generate_otp()
+    otp = str(random.randint(100000, 999999))
 
-    # Store OTP (5 min expiry)
-    cache.set(f"otp_{email}", otp, timeout=300)
+    cache.set(f"otp_{email}", otp, timeout=300)  # 5 min
 
-    # TEMP: print OTP (for testing)
-    print(f"OTP for {email}: {otp}")
+    print("OTP for", email, "=", otp)  # 🔥 TEMP DEBUG
 
     return Response({"message": "OTP sent"})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def verify_otp_reset(request):
+def verify_otp(request):
     email = request.data.get("email")
     otp = request.data.get("otp")
     password = request.data.get("password")
 
+    if not email or not otp or not password:
+        return Response({"error": "All fields required"}, status=400)
+
     stored_otp = cache.get(f"otp_{email}")
 
-    if not stored_otp:
-        return Response({"error": "OTP expired"}, status=400)
+    print("INPUT OTP:", otp)
+    print("STORED OTP:", stored_otp)
 
-    if stored_otp != otp:
+    if not stored_otp:
+        return Response({"error": "OTP expired or not found"}, status=400)
+
+    if str(stored_otp) != str(otp):
         return Response({"error": "Invalid OTP"}, status=400)
 
-    try:
-        user = User.objects.get(email=email)
-        user.password = make_password(password)
-        user.save()
+    user = User.objects.filter(email=email).first()
 
-        cache.delete(f"otp_{email}")
-
-        return Response({"message": "Password reset successful"})
-
-    except User.DoesNotExist:
+    if not user:
         return Response({"error": "User not found"}, status=404)
+
+    user.password = make_password(password)
+    user.save()
+
+    cache.delete(f"otp_{email}")  # cleanup
+
+    return Response({"message": "Password reset successful"})

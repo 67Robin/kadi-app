@@ -15,6 +15,7 @@ from django.utils.encoding import force_bytes,force_str
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from .utils import password_reset_token
+from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
@@ -416,39 +417,22 @@ def set_new_password(request):
 def reset_password_page(request, uid, token):
     return render(request, "reset_password.html")
 
-
-import requests
-from django.conf import settings
-
-import requests
-
-import requests
-
 def send_reset_email(email, reset_link):
-    url = "https://api.resend.com/emails"
+    send_mail(
+        subject="Reset Your Password",
+        message=f"""
+                  Hi,
 
-    headers = {
-        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
-        "Content-Type": "application/json"
-    }
+                  Click the link below to reset your password:
 
-    data = {
-        "from": "Kadi App <onboarding@resend.dev>",
-        "to": [email],
-        "subject": "Reset Your Password",
-        "html": f"""
-            <h3>Password Reset</h3>
-            <p>Click below to reset your password:</p>
-            <a href="{reset_link}">{reset_link}</a>
-        """
-    }
+                  {reset_link}
 
-    response = requests.post(url, json=data, headers=headers)
-
-    print("EMAIL:", email)
-    print("STATUS:", response.status_code)
-    print("RESPONSE:", response.text)
-
+                  If you didn’t request this, ignore this email.
+        """,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+        fail_silently=False,
+    )
 @api_view(['POST'])
 
 @permission_classes([AllowAny])

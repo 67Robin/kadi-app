@@ -98,7 +98,7 @@
 
   const now = new Date();
   const cutoff = new Date();
-  cutoff.setHours(10, 30, 0, 0);
+  cutoff.setHours(23, 59, 0, 0);
 
   const minutesLeft = Math.round((cutoff - now) / 60000);
   const subtitleEl = document.getElementById('order-subtitle');
@@ -151,7 +151,7 @@
       snacks = fresh;
       renderSnacks(); // 🔥 only if different
     }
-    if (new Date() >= new Date(new Date().setHours(10, 30, 0, 0))) return;
+    if (new Date() >= new Date(new Date().setHours(23, 59, 0, 0))) return;
     await checkExistingOrder();
     checkCutoff();
   }
@@ -355,7 +355,7 @@
       alert(JSON.stringify(err));
     }
   }
-  if (new Date() >= new Date(new Date().setHours(10, 30, 0, 0))) {
+  if (new Date() >= new Date(new Date().setHours(23, 59, 0, 0))) {
     // ⛔CLOSED
     document.getElementById('order-form').classList.add('d-none');
     document.getElementById('locked-msg').classList.remove('d-none');

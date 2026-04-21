@@ -78,6 +78,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items     = OrderItemSerializer(many=True)
     user_name = serializers.CharField(source='user.name', read_only=True)
     total     = serializers.SerializerMethodField()
+    user = serializers.EmailField(source='user.email', read_only=True)
 
     class Meta:
         model  = Order

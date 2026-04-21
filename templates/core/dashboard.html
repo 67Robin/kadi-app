@@ -151,7 +151,7 @@
       snacks = fresh;
       renderSnacks(); // 🔥 only if different
     }
-    if (new Date() >= new Date(new Date().setHours(10,30,0,0))) return;
+    if (new Date() >= new Date(new Date().setHours(10, 30, 0, 0))) return;
     await checkExistingOrder();
     checkCutoff();
   }
@@ -163,7 +163,11 @@
     });
     if (res.ok) {
       const orders = await res.json();
-      const todayOrder = orders.find(o => o.date === today);
+      const currentUser = localStorage.getItem('user_email');
+
+      const todayOrder = orders.find(o =>
+        o.date === today && o.user === currentUser
+      );
       if (todayOrder) {
         existingOrder = todayOrder;
         todayOrder.items.forEach(item => {

@@ -61,7 +61,7 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order    = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', db_index=True)
+    order    = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     snack    = models.ForeignKey(SnackItem, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0)
 

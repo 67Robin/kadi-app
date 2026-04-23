@@ -71,7 +71,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(
             queryset,
             many=True,
-            context={'request': request}  
+            context={'request': request}  # 🔥 THIS IS THE FIX
         )
         return Response(serializer.data)
 
@@ -106,12 +106,12 @@ def aggregated_order(request):
         print("DATE ERROR:", date_str, e)
         date = timezone.localdate() 
 
-
+    # ✅ FIX 2: Correct filtering
     people_count = Order.objects.filter(date=date).count()
 
     data = (
     OrderItem.objects
-    .select_related('snack', 'order')  
+    .select_related('snack', 'order')   # 🔥 IMPORTANT
     .filter(order__date=date, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity'))
@@ -123,6 +123,7 @@ def aggregated_order(request):
         image_url = None
         raw = item.get('snack__image')
 
+        # ✅ FIX 3: Safe image handling
         if raw:
             raw = str(raw)
             if raw.startswith('http'):
@@ -136,7 +137,7 @@ def aggregated_order(request):
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),
             'snack__image_url': image_url,
-            'total_qty': item['total_qty'] or 0,  
+            'total_qty': item['total_qty'] or 0,  # ✅ FIX 4
         })
     return Response({
         'date': str(date),
@@ -154,38 +155,14 @@ def monthly_summary(request, year, month):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
 
-    from datetime import date
-    from django.db.models import Sum, F, FloatField
-    from django.db.models.functions import Cast
-
-    # ✅ Step 1: create date range (FAST)
-    start_date = date(year, month, 1)
-
-    if month == 12:
-        end_date = date(year + 1, 1, 1)
-    else:
-        end_date = date(year, month + 1, 1)
-
-    # ✅ Step 2: optimized query (DB does calculation)
-    items = (
-    OrderItem.objects
-    .filter(
+    items = OrderItem.objects.filter(
         order__user=user,
-        order__date__gte=start_date,
-        order__date__lt=end_date,
+        order__date__year=year,
+        order__date__month=month,
         quantity__gt=0
-    )
-    .values('snack__name', 'snack__price')
-    .annotate(
-        total_qty=Sum('quantity'),
-        total_price=Sum(
-            F('quantity') * Cast(F('snack__price'), FloatField())
-        )
-    )
-    .order_by('-total_qty')
-    )
+    ).values('snack__name', 'snack__price').annotate(total_qty=Sum('quantity'))
 
-    total = sum(i['total_price'] or 0 for i in items)
+    total = sum(float(i['snack__price']) * i['total_qty'] for i in items)
     return Response({
         'user': user.name,
         'year': year,
@@ -284,6 +261,7 @@ def user_history(request):
             subtotal = price * item.quantity
             total += subtotal
 
+            # ✅ SAFE IMAGE HANDLING
             image_url = None
             try:
                 raw = getattr(item.snack, 'image', None)
@@ -309,7 +287,7 @@ def user_history(request):
 
         if items_data:
             response.append({
-                "date": str(order.date),   
+                "date": str(order.date),   # ✅ IMPORTANT (fix JSON issue)
                 "total": round(total, 2),
                 "items": items_data
             })
@@ -320,7 +298,7 @@ def history_view(request):
 
     data = (
     OrderItem.objects
-    .select_related('snack', 'order')   
+    .select_related('snack', 'order')   # 🔥 IMPORTANT
     .filter(order__date=today, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity')).order_by('-total_qty')

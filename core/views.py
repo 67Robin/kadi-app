@@ -147,6 +147,45 @@ def aggregated_order(request):
 
 @api_view(['GET'])
 def monthly_summary(request, year, month):
+    if request.user.role == 'admin' and request.query_params.get('all_users') == 'true':
+        items = OrderItem.objects.filter(
+            order__date__year=year,
+            order__date__month=month,
+            quantity__gt=0
+        ).values(
+            'order__user__id',
+            'order__user__name',
+            'snack__name',
+            'snack__price'
+        ).annotate(total_qty=Sum('quantity'))
+
+        users_data = {}
+        for item in items:
+            uid = item['order__user__id']
+            uname = item['order__user__name']
+            if uid not in users_data:
+                users_data[uid] = {
+                    'user': uname,
+                    'year': year,
+                    'month': month,
+                    'items': [],
+                    'total': 0
+                }
+            
+            qty = item['total_qty']
+            price = float(item['snack__price'])
+            users_data[uid]['items'].append({
+                'snack__name': item['snack__name'],
+                'snack__price': item['snack__price'],
+                'total_qty': qty
+            })
+            users_data[uid]['total'] += qty * price
+
+        for uid in users_data:
+            users_data[uid]['total'] = round(users_data[uid]['total'], 2)
+
+        return Response(list(users_data.values()))
+
     user = request.user
     user_id = request.query_params.get('user_id')
     if user_id and request.user.role == 'admin':

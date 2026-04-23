@@ -94,24 +94,16 @@
         <div class="k-spinner mx-auto"></div>
       </div>`;
 
-    const usersRes = await fetch(API + '/users/', {
-      headers: { 'Authorization': 'Bearer ' + getToken() }
-    });
-    const users = await usersRes.json();
-
     let allReports = [];
 
-    for (const user of users) {
-      const res = await fetch(
-        API + `/reports/monthly/${year}/${month}/?user_id=${user.id}`,
-        { headers: { 'Authorization': 'Bearer ' + getToken() } }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          allReports.push(data);
-        }
-      }
+    const res = await fetch(
+      API + `/reports/monthly/${year}/${month}/?all_users=true`,
+      { headers: { 'Authorization': 'Bearer ' + getToken() } }
+    );
+    
+    if (res.ok) {
+      const data = await res.json();
+      allReports = data.filter(report => report.items && report.items.length > 0);
     }
 
     reportData = allReports;

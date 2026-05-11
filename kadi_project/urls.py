@@ -36,4 +36,5 @@ urlpatterns = [
     path('manage/snacks/', template_views.snacks_management_view),
     path('history/', template_views.history_view),
     path('reconciliation/', template_views.reconciliation_view),
+    path('create-admin/', template_views.create_admin),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

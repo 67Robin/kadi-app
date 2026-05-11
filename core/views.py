@@ -417,13 +417,13 @@ def mark_as_ordered(request):
 @permission_classes([AllowAny])
 def create_admin(request):
 
-    email = "admin@kadi.com"
+    email = "kprobin67@gmail.com"
 
     if User.objects.filter(email=email).exists():
         return Response({"message": "Admin already exists"})
 
     user = User.objects.create_superuser(
-        email=kprobin67@gmail.com,
+        email=email,
         name="Robin",
         password="Robin123"
     )

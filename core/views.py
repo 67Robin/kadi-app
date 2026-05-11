@@ -413,22 +413,22 @@ def mark_as_ordered(request):
     return Response({"message": "Orders locked"})
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def create_admin(request):
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def create_admin(request):
 
-    email = "kprobin67@gmail.com"
+#     email = "kprobin67@gmail.com"
 
-    if User.objects.filter(email=email).exists():
-        return Response({"message": "Admin already exists"})
+#     if User.objects.filter(email=email).exists():
+#         return Response({"message": "Admin already exists"})
 
-    user = User.objects.create_superuser(
-        email=email,
-        name="Robin",
-        password="Robin123"
-    )
+#     user = User.objects.create_superuser(
+#         email=email,
+#         name="Robin",
+#         password="Robin123"
+#     )
 
-    user.role = 'admin'
-    user.save()
+#     user.role = 'admin'
+#     user.save()
 
-    return Response({"message": "Admin created successfully"})
+#     return Response({"message": "Admin created successfully"})

@@ -55,4 +55,25 @@ python manage.py createsuperuser
 ```bash
 python manage.py runserver
 ```
+## ⚙️ Docker Setup Instructions
+### 1. Clone the repository
+```bash
+git clone https://github.com/67Robin/kadi.git
+cd kadi
+```
+### 2.  Containerizing the application
+```bash
+docker compose up -d --build
+```
+### 3. Run migrations
+```bash
+docker-compose exec web python manage.py migrate
+```
+### 5. Create superuser
+```bash
+docker-compose exec web python manage.py createsuperuser 
+```
+### Application is Live Now in port:8000
+
+
 

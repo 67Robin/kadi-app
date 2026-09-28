@@ -21,7 +21,7 @@ from .serializers import (
     SnackItemSerializer, OrderSerializer
 )
 
-CUTOFF_TIME = time(10, 30)
+CUTOFF_TIME = time(23, 30)
 
 def is_before_cutoff():
     return timezone.localtime().time() < CUTOFF_TIME
@@ -71,7 +71,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(
             queryset,
             many=True,
-            context={'request': request}  # 🔥 THIS IS THE FIX
+            context={'request': request}  
         )
         return Response(serializer.data)
 
@@ -106,12 +106,11 @@ def aggregated_order(request):
         print("DATE ERROR:", date_str, e)
         date = timezone.localdate() 
 
-    # ✅ FIX 2: Correct filtering
     people_count = Order.objects.filter(date=date).count()
 
     data = (
     OrderItem.objects
-    .select_related('snack', 'order')   # 🔥 IMPORTANT
+    .select_related('snack', 'order')
     .filter(order__date=date, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity'))
@@ -137,7 +136,7 @@ def aggregated_order(request):
             'snack__name': item['snack__name'],
             'snack__price': str(item['snack__price']),
             'snack__image_url': image_url,
-            'total_qty': item['total_qty'] or 0,  # ✅ FIX 4
+            'total_qty': item['total_qty'] or 0,  
         })
     return Response({
         'date': str(date),
@@ -259,6 +258,20 @@ def toggle_user(request, user_id):
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=404)
 
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def reset_user_password(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        new_password = request.data.get('password')
+        if not new_password or len(new_password) < 6:
+            return Response({'error': 'Password must be at least 6 characters'}, status=400)
+        user.set_password(new_password)
+        user.save()
+        return Response({'message': f'Password reset for {user.name}'})
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
 def users_management_view(request):
     return render(request, 'core/admin/users.html')
 
@@ -300,7 +313,7 @@ def user_history(request):
             subtotal = price * item.quantity
             total += subtotal
 
-            # ✅ SAFE IMAGE HANDLING
+            # IMAGE HANDLING
             image_url = None
             try:
                 raw = getattr(item.snack, 'image', None)
@@ -326,7 +339,7 @@ def user_history(request):
 
         if items_data:
             response.append({
-                "date": str(order.date),   # ✅ IMPORTANT (fix JSON issue)
+                "date": str(order.date),   
                 "total": round(total, 2),
                 "items": items_data
             })
@@ -337,7 +350,7 @@ def history_view(request):
 
     data = (
     OrderItem.objects
-    .select_related('snack', 'order')   # 🔥 IMPORTANT
+    .select_related('snack', 'order') 
     .filter(order__date=today, quantity__gt=0)
     .values('snack__name', 'snack__price', 'snack__image')
     .annotate(total_qty=Sum('quantity')).order_by('-total_qty')
@@ -378,6 +391,8 @@ def cancel_order(request):
     today = timezone.localdate()
     try:
         order = Order.objects.get(user=request.user, date=today)
+        if order.is_locked:
+            raise PermissionDenied("Order has already been placed by admin and cannot be cancelled.")
         order.delete()
         return Response({'message': 'Order cancelled successfully'})
     except Order.DoesNotExist:

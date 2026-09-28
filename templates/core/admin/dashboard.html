@@ -178,8 +178,8 @@
   }
 
   async function handleOrderClick() {
-    await sendWhatsApp();   // ✅ open WhatsApp first
-    markAsOrdered();        // ✅ then update UI
+    await sendWhatsApp();   
+    markAsOrdered();        
   }
   async function sendWhatsApp() {
   try {
@@ -198,10 +198,10 @@
     const text = encodeURIComponent(data.message);
     const url = `https://wa.me/${phone}?text=${text}`;
 
-    // ✅ Try open
+    //  Try open
     const win = window.open(url, "_blank");
 
-    // ✅ If blocked → fallback
+    //  If blocked → fallback
     if (!win) {
       alert("Popup blocked! Opening in same tab...");
       window.location.href = url;

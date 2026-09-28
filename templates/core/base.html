@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 
 <head>
@@ -6,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kadi App</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="icon" href="/static/assets/Logooooooooo.png" sizes="16x16 32x32" type="image/png">
-  <link rel="apple-touch-icon" href="/static/assets/Logooooooooo.png" sizes="180x180">
+  <link rel="icon" href="{% static 'assets/Logooooooooo.png' %}" sizes="16x16 32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'assets/Logooooooooo.png' %}" sizes="180x180">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -19,6 +20,7 @@
       --success: #43d39e;
       --warning: #ffbe0b;
       --dark: #282c3f;
+      --transparent : #0e0d0d30;
       --gray: #f4f4f4;
       --text: #282c3f;
       --text-muted: #93959f;
@@ -38,14 +40,16 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
         'Segoe UI', Roboto, sans-serif;
-      background: #f4f4f4;
+      background: #f5eeec;
       color: var(--text);
       min-height: 100vh;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
     }
 
     /* Navbar */
     .navbar {
-      background: #f4f4f400;
+      background: #ffffff00;
       backdrop-filter: blur(100px);
       -webkit-backdrop-filter: blur(100px);
       border-bottom: 1px solid rgba(108, 99, 255, 0.08);
@@ -86,9 +90,14 @@
     }
 
     /* Cards */
+
+    .k-card-popup{
+      background-color: #ffffff00;
+    }
+    
     .k-card {
       background: white;
-      border-radius: 20px;
+      border-radius: 24px;
       border: none;
       box-shadow: var(--card-shadow);
       transition: all 0.3s ease;
@@ -113,7 +122,7 @@
     /* Stat cards */
     .stat-card {
       background: white;
-      border-radius: 16px;
+      border-radius: 24px;
       padding: 20px;
       text-align: center;
       box-shadow: var(--card-shadow);
@@ -148,7 +157,7 @@
     /* Buttons */
     .k-btn {
       border: none;
-      border-radius: 12px;
+      border-radius: 26px;
       padding: 10px 22px;
       font-size: 0.9rem;
       font-weight: 600;
@@ -214,7 +223,7 @@
     .k-input {
       background: var(--gray);
       border: 1.5px solid transparent;
-      border-radius: 12px;
+      border-radius: 24px;
       padding: 12px 16px;
       font-size: 0.95rem;
       font-family: inherit;
@@ -463,12 +472,12 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background: rgba(108, 99, 255, 0.2);
+      background: rgba(0, 0, 0, 0);
       border-radius: 3px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(108, 99, 255, 0.4);
+      background: rgba(0, 0, 0, 0);
     }
 
     /* Page container */
@@ -525,7 +534,7 @@
       <a class="navbar-brand d-flex align-items-center gap-2" href="/dashboard/">
         <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;
         background:#ffffff00;display:flex;align-items:center;justify-content:center;">
-          <img src="/static/assets/Logooooooooo.png" alt="Kadi Logo" style="width:80px;height:80px;object-fit:contain;">
+          <img src="{% static 'assets/Logooooooooo.png' %}" alt="Kadi Logo" style="width:80px;height:80px;object-fit:contain;">
         </div>
         <span>Kadi</span>
       </a>
@@ -575,8 +584,8 @@
   </div>
 
   <!-- Mobile sidebar -->
-  <div id="mobile-sidebar" style="position:fixed;top:0;left:0;bottom:0;width:280px;
-  background:var(--dark);z-index:1002;
+  <div id="mobile-sidebar" style="position:fixed;top:0;left:0;bottom:0;width:280px;border-top-right-radius: 28px;border-bottom-right-radius: 28px;
+  background:var(--transparent);z-index:1002;
   transform:translateX(-100%);transition:transform 0.3s ease;
   display:flex;flex-direction:column;overflow-y:auto;">
 
@@ -586,7 +595,7 @@
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:48px;height:48px;border-radius:14px;
         background:#ffffff00;display:flex;align-items:center;justify-content:center;">
-          <img src="/static/assets/Logooooooooo.png" alt="Kadi Logo" style="width:96px;height:96px;object-fit:contain;">
+          <img src="{% static 'assets/Logooooooooo.png' %}" alt="Kadi Logo" style="width:96px;height:96px;object-fit:contain;">
         </div>
         <div>
           <div style="font-size:1.2rem;font-weight:700;color:white;
@@ -648,14 +657,14 @@
 
     <!-- Sign out -->
     <div
-      style="padding:12px 12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;">
+      style="padding:12px 12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;margin-left:12px;">
       <div style="width:40px;height:40px;border-radius:50%;
         background:linear-gradient(135deg,var(--primary),var(--primary-dark));
         display:flex;align-items:center;justify-content:center;
         color:white;font-weight:700;font-size:1rem;flex-shrink:0;" id="sidebar-avatar"></div>
       <div style="font-size:0.9rem;font-weight:600;color:white;" id="sidebar-username"></div>
     </div>
-    <a href="#" onclick="logout()" class="sidebar-link" style="color:rgba(255,100,100,0.8)!important;">
+    <a href="#" onclick="logout()" class="sidebar-link" style="color:rgba(255,100,100,0.8)!important;margin-left:12px;">
       <i class="bi bi-box-arrow-right"></i>
       <span>Sign out</span>
     </a>

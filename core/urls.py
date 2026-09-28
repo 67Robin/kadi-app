@@ -16,6 +16,7 @@ urlpatterns = [
     path('users/me/', views.me, name='me'),
     path('users/create/', views.create_user, name='create_user'),
     path('users/<int:user_id>/toggle/', views.toggle_user, name='toggle_user'),
+    path('users/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
     path('users/', views.users_list, name='users'),
     path('orders/cancel/', views.cancel_order, name='cancel_order'),
     path('', include(router.urls)),

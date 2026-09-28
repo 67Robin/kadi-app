@@ -32,7 +32,6 @@ class SnackItemSerializer(serializers.ModelSerializer):
             return None
 
     def create(self, validated_data):
-        # 🔥 IMPORTANT FIX
         image = validated_data.pop('image', None)
 
         snack = SnackItem.objects.create(**validated_data)
